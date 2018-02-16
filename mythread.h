@@ -14,7 +14,7 @@
 #define IDLE 3
 
 #define STACKSIZE 10000
-#define QUANTUM_TICKS 40
+#define QUANTUM_TICKS 5
 
 #define LOW_PRIORITY 0
 #define HIGH_PRIORITY 1
@@ -35,3 +35,9 @@ int mythread_getpriority(); /* Returns the priority of calling thread*/
 void mythread_exit(); /* Frees the thread structure and exits the thread */
 int mythread_gettid(); /* Returns the thread id */
 int read_network(); /* */
+
+int tick_minus();/*It substract 1 tick and it checks if there is no more ticks, returning 0*/
+void mythread_next();/*It changes the execution to the next thread*/
+void activator_RR(TCB* actual, TCB* next);/*Activator with swapcontext*/
+void activator_FIFO(TCB* next);/*Activator with setcontext*/
+int getTicks();/*It returns the number of remaining ticks (only for debugging)*/

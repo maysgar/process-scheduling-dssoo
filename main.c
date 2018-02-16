@@ -8,55 +8,50 @@
 #include "mythread.h"
 
 
-void fun1 (int global_index)
-{
-  int a=0, b=0;
-read_network();
-  for (a=0; a<10; ++a) { 
-//    printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
-    for (b=0; b<25000000; ++b);
-  }
-
-  for (a=0; a<10; ++a) { 
-//    printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
-    for (b=0; b<25000000; ++b);
-  }
-  mythread_exit(); 
-  return;
-}
-
-
-void fun2 (int global_index)
-{
-  int a=0, b=0;
+void fun1 (int global_index){
   read_network();
-  for (a=0; a<10; ++a) {
-  //  printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
-    for (b=0; b<18000000; ++b);
+  for (int a=0; a<QUANTUM_TICKS; ++a) {
+    printf ("Thread %d with priority %d\t from fun1 and remaining ticks %i\n", mythread_gettid(), mythread_getpriority(), getTicks());
+    if(tick_minus() == 0){//The time has expired
+      printf("Time expired\n");
+      mythread_exit();//I finish the thread
+      return;
+    }
   }
-  for (a=0; a<10; ++a) {
-  //  printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
-    for (b=0; b<18000000; ++b);
-  }
-  mythread_exit();
+  printf("Adios\n");
+  mythread_next();
   return;
 }
 
-void fun3 (int global_index)
-{
-  int a=0, b=0;
-  for (a=0; a<10; ++a) {
-    //printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
-    for (b=0; b<40000000; ++b);
+void fun2 (int global_index){
+  read_network();
+  for (int a=0; a<QUANTUM_TICKS; ++a) {
+    printf ("Thread %d with priority %d\t from fun1 and remaining ticks %i\n", mythread_gettid(), mythread_getpriority(), getTicks());
+    if(tick_minus() == 0){//The time has expired
+      printf("Time expired\n");
+      mythread_exit();//I finish the thread
+      return;
+    }
   }
-  for (a=0; a<10; ++a) {
-    //printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
-    for (b=0; b<40000000; ++b);
-  }
-  mythread_exit();
+  printf("Adios\n");
+  mythread_next();
   return;
 }
 
+void fun3 (int global_index){
+  read_network();
+  for (int a=0; a<QUANTUM_TICKS; ++a) {
+    printf ("Thread %d with priority %d\t from fun1 and remaining ticks %i\n", mythread_gettid(), mythread_getpriority(), getTicks());
+    if(tick_minus() == 0){//The time has expired
+      printf("Time expired\n");
+      mythread_exit();//I finish the thread
+      return;
+    }
+  }
+  printf("Adios\n");
+  mythread_next();
+  return;
+}
 
 
 int main(int argc, char *argv[])
@@ -77,7 +72,7 @@ int main(int argc, char *argv[])
   if((k = mythread_create(fun3,LOW_PRIORITY)) == -1){
     printf("thread failed to initialize\n");
     exit(-1);
-  }  
+  }
   if((l = mythread_create(fun1,HIGH_PRIORITY)) == -1){
     printf("thread failed to initialize\n");
     exit(-1);
@@ -87,13 +82,13 @@ int main(int argc, char *argv[])
     printf("thread failed to initialize\n");
     exit(-1);
   }
-      
-     
-  for (a=0; a<10; ++a) {
-  //    printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
+
+
+  for (a=0; a<N; ++a) {
+     printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
      for (b=0; b<30000000; ++b);
-  }	
- 
+  }
+
   if((a =  mythread_create(fun1,HIGH_PRIORITY)) == -1){
     printf("thread failed to initialize\n");
     exit(-1);
@@ -102,11 +97,9 @@ int main(int argc, char *argv[])
     printf("thread failed to initialize\n");
     exit(-1);
   }
-  mythread_exit();	
-  
+  mythread_exit();
+
   printf("This program should never come here\n");
-  
+
   return 0;
 } /****** End main() ******/
-
-

@@ -6,19 +6,19 @@
 #include <unistd.h>
 
 #include "mythread.h"
+#define PRINTEA 1 //If it is 1 the messages are printed
 
 
 void fun1 (int global_index){
   read_network();
   for (int a=0; a<QUANTUM_TICKS; ++a) {
-    printf ("Thread %d with priority %d\t from fun1 and remaining ticks %i\n", mythread_gettid(), mythread_getpriority(), getTicks());
+    if(PRINTEA == 1) printf ("Thread %d with priority %d\t from fun1 and remaining ticks %i\n", mythread_gettid(), mythread_getpriority(), getTicks());
     if(tick_minus() == 0){//The time has expired
       printf("Time expired\n");
       mythread_exit();//I finish the thread
       return;
     }
   }
-  printf("Adios\n");
   mythread_next();
   return;
 }
@@ -26,14 +26,13 @@ void fun1 (int global_index){
 void fun2 (int global_index){
   read_network();
   for (int a=0; a<QUANTUM_TICKS; ++a) {
-    printf ("Thread %d with priority %d\t from fun1 and remaining ticks %i\n", mythread_gettid(), mythread_getpriority(), getTicks());
+    if(PRINTEA == 1) printf("Thread %d with priority %d\t from fun2 and remaining ticks %i\n", mythread_gettid(), mythread_getpriority(), getTicks());
     if(tick_minus() == 0){//The time has expired
       printf("Time expired\n");
       mythread_exit();//I finish the thread
       return;
     }
   }
-  printf("Adios\n");
   mythread_next();
   return;
 }
@@ -41,14 +40,13 @@ void fun2 (int global_index){
 void fun3 (int global_index){
   read_network();
   for (int a=0; a<QUANTUM_TICKS; ++a) {
-    printf ("Thread %d with priority %d\t from fun1 and remaining ticks %i\n", mythread_gettid(), mythread_getpriority(), getTicks());
+    if(PRINTEA == 1) printf("Thread %d with priority %d\t from fun3 and remaining ticks %i\n", mythread_gettid(), mythread_getpriority(), getTicks());
     if(tick_minus() == 0){//The time has expired
       printf("Time expired\n");
       mythread_exit();//I finish the thread
       return;
     }
   }
-  printf("Adios\n");
   mythread_next();
   return;
 }

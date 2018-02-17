@@ -17,6 +17,7 @@ void network_interrupt(int sig);
 
 /* Array of state thread control blocks: the process allows a maximum of N threads */
 static TCB t_state[N];
+static struct queue *tqueue;//The queue which will have all the threads
 
 /* Current running thread */
 static TCB* running;
@@ -34,6 +35,7 @@ static void idle_function(){
 /* Initialize the thread library */
 void init_mythreadlib() {
   int i;
+  tqueue = queue_new();//I initialize the queue
   /* Create context for the idle thread */
   if(getcontext(&idle.run_env) == -1){
     perror("*** ERROR: getcontext in init_thread_lib");
@@ -98,8 +100,11 @@ int mythread_create (void (*fun_addr)(),int priority)
   t_state[i].tid = i;
   t_state[i].run_env.uc_stack.ss_size = STACKSIZE;
   t_state[i].run_env.uc_stack.ss_flags = 0;
-  t_state[i].ticks = 12;
+  t_state[i].ticks = 5;
+  enqueue(tqueue, &t_state[i]);
   makecontext(&t_state[i].run_env, fun_addr, 1);
+  printf("\t\tQueue after inserting\n");
+  queue_print(tqueue);
   return i;
 } /****** End my_thread_create() ******/
 
@@ -122,13 +127,13 @@ void mythread_exit() {
   t_state[tid].state = FREE;
   free(t_state[tid].run_env.uc_stack.ss_sp);
 
-  TCB* next = scheduler(-1);
+  TCB* next = scheduler(tid);
   activator_FIFO(next);
 }
 
-/* Free terminated thread and exits */
+/* We change the thread to the next one */
 void mythread_next() {
-  int tid = mythread_gettid();
+    int tid = mythread_gettid();
 
   printf("*** THREAD %d NO MORE TIME\n", tid);
   int newTicks = t_state[tid].ticks - QUANTUM_TICKS;//I substract the ticks used in this slot to the remaining ones

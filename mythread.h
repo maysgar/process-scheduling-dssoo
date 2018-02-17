@@ -14,7 +14,7 @@
 #define IDLE 3
 
 #define STACKSIZE 10000
-#define QUANTUM_TICKS 5
+#define QUANTUM_TICKS 3
 
 #define LOW_PRIORITY 0
 #define HIGH_PRIORITY 1

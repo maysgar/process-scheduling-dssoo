@@ -133,7 +133,7 @@ void mythread_exit() {
 
 /* We change the thread to the next one */
 void mythread_next() {
-    int tid = mythread_gettid();
+  int tid = mythread_gettid();
 
   printf("*** THREAD %d NO MORE TIME\n", tid);
   int newTicks = t_state[tid].ticks - QUANTUM_TICKS;//I substract the ticks used in this slot to the remaining ones
@@ -142,7 +142,8 @@ void mythread_next() {
   }
   t_state[tid].ticks = newTicks;//I store the remaining ticks
 
-  TCB* next = t_state[tid].next;//Hay que hacer una puta queue
+  //TCB* next = t_state[tid] -> next;//Hay que hacer una puta queue
+  TCB* next = scheduler(tid);
   activator_RR(&t_state[tid], next);
 }
 

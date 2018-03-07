@@ -14,7 +14,7 @@
 #define IDLE 3
 
 #define STACKSIZE 10000
-#define QUANTUM_TICKS 3
+#define QUANTUM_TICKS 2 /*RR time slot*/
 
 #define LOW_PRIORITY 0
 #define HIGH_PRIORITY 1
@@ -24,7 +24,7 @@ typedef struct tcb{
   int state; /* the state of the current block: FREE or INIT */
   int tid; /* thread id*/
   int priority; /* thread priority*/
-  int ticks;
+  int ticks; /*execution time*/
   void (*function)(int);  /* the code of the thread */
   ucontext_t run_env; /* Context of the running environment*/
 }TCB;

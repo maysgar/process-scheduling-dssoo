@@ -20,7 +20,8 @@ static TCB* running; /* Current running thread */
 static int current = 0;
 
 /* Variable indicating if the library is initialized (init == 1) or not (init == 0) */
-static int init=0;
+static int init = 0;
+static int count = 0; /*to know in what RR tick are we*/
 
 /* Thread control block for the idle thread */
 static TCB idle;
@@ -238,7 +239,18 @@ TCB* schedulerRR(int id){
 /* Timer interrupt  */
 void timer_interrupt(int sig)
 {
-  printf("Interrupt\n");
+	if(PRINT == 1) printf ("Thread %d with priority %d\t remaining ticks %i\n", mythread_gettid(), mythread_getpriority(0), getTicks());
+	if(tick_minus() == 0){ /*checking if the thread has finished its execution*/
+		mythread_exit(); /*I finish the thread*/
+		return;
+	}
+	count ++;
+	if(count == QUANTUM_TICKS) /*RR time slice consumed*/
+	{
+		count = 0; /*restore the count*/
+		mythread_next(); /*take the next thread and store the current one in the queue*/
+	}
+	return;
 }
 
 void activator_RR(TCB* actual, TCB* next){

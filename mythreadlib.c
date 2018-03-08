@@ -8,6 +8,7 @@
 #include "queue.h"
 
 TCB* scheduler();
+TCB* schedulerRR ();
 void activator();
 void timer_interrupt(int sig);
 void network_interrupt(int sig);
@@ -152,7 +153,7 @@ void mythread_exit() {
   t_state[tid].state = FREE; /*change the position of the array to free*/
   free(t_state[tid].run_env.uc_stack.ss_sp);
 
-  TCB* next = scheduler(tid); /*get the next thread to be executed*/
+  TCB* next = schedulerRR(tid); /*get the next thread to be executed*/
   activator_FIFO(next); /*perform the context switch*/
 }
 
@@ -162,7 +163,7 @@ void mythread_next() {
 
   printf("*** THREAD %d NO MORE TIME (ticks remaining: %i)\n", tid, t_state[current].ticks);
 
-	TCB* next = scheduler(tid); /*get the next thread to be executed*/
+	TCB* next = schedulerRR(tid); /*get the next thread to be executed*/
   activator_RR(&t_state[tid], next); /*perform the context switch*/
 }
 
@@ -201,7 +202,7 @@ int getTicks(){
   return t_state[tid].ticks;//I return the remaining ticks
 }
 
-/* FIFO para alta prioridad, RR para baja*
+/* FIFO scheduler
  * the new thread to be executed is returned*/
 TCB* scheduler(int id){
   int i;
@@ -217,9 +218,27 @@ TCB* scheduler(int id){
   exit(1);
 }
 
+/* RR scheduler
+ * the new thread to be executed is returned*/
+TCB* schedulerRR(int id){
+  int i, aux = 0; /*aux is calculated to know which is the next thread in the correct order*/
+  for(i=0; i<N; i++) /*I check all the positions of the thread's array*/
+	{
+    aux = (i + id) % N; /*calculate the next thread*/
+    if (t_state[aux].state == INIT && t_state[aux].tid != id) /*if it an available thread*/
+ 		{																											/*and it is not the current one */
+        current = aux; /*the new current thread it is the one found*/
+	      return &t_state[aux]; /*the entry of the array is returned*/
+    }
+  }
+  printf("mythread_free: No thread in the system\nExiting...\n");
+  exit(1);
+}
+
 /* Timer interrupt  */
 void timer_interrupt(int sig)
 {
+  printf("Interrupt\n");
 }
 
 void activator_RR(TCB* actual, TCB* next){

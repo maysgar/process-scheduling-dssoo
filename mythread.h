@@ -7,7 +7,7 @@
 
 #include "interrupt.h"
 
-#define N 10
+#define N 10 /*maximum number of threads at the same time*/
 #define FREE 0
 #define INIT 1
 #define WAITING 2

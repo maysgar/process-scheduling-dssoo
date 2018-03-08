@@ -12,12 +12,15 @@ static sigset_t maskval_interrupt,oldmask_interrupt;
 void reset_timer(long usec) {
   struct itimerval quantum;
 
-  /* Intialize an interval corresponding to round-robin quantum*/
+  /* Intialize an interval corresponding to round-robin quantum*
   quantum.it_interval.tv_sec = usec / 1000000;
   quantum.it_interval.tv_usec = usec % 1000000;
-  /* Initialize the remaining time from current quantum */
   quantum.it_value.tv_sec = usec / 1000000;
-  quantum.it_value.tv_usec = usec % 1000000;
+  quantum.it_value.tv_usec = usec % 1000000;*/
+  quantum.it_interval.tv_sec = 0;
+  quantum.it_interval.tv_usec = 0;
+  quantum.it_value.tv_sec = 0;
+  quantum.it_value.tv_usec = 500000; /*mas o menos medio segundo*/
   /* Activate the virtual timer to generate a SIGVTALRM signal when the quantum is over */
   if(setitimer(ITIMER_VIRTUAL, &quantum, (struct itimerval *)0) == -1){
     perror("setitimer");
@@ -46,7 +49,7 @@ void init_interrupt()
   void timer_interrupt(int sig);
   struct sigaction sigdat;
   /* Initializes the signal mask to empty */
-  sigemptyset(&maskval_interrupt); 
+  sigemptyset(&maskval_interrupt);
   /* Prepare a virtual time alarm */
   sigdat.sa_handler = my_handler;
   sigemptyset(&sigdat.sa_mask);
@@ -98,19 +101,19 @@ void init_network_interrupt()
   struct sigevent event;
   timer_t timer_id;
   struct timespec periodTime;
-  struct itimerspec timerdata; 
+  struct itimerspec timerdata;
   struct sigaction sigdat;
  /* Create timer */
  event.sigev_notify = SIGEV_SIGNAL;
  event.sigev_signo = SIGPROF;
  timer_create (CLOCK_REALTIME, &event, &timer_id);
-  
+
  // set periodTime time
  periodTime.tv_sec=1;
  periodTime.tv_nsec=0;
 
  /* Initializes the signal mask to empty */
- sigemptyset(&maskval_net_interrupt); 
+ sigemptyset(&maskval_net_interrupt);
  /* Prepare a virtual time alarm */
 
  sigdat.sa_handler = my_network_handler;

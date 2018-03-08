@@ -1,11 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "mythread.h"
-#define PRINT 1 //If it is 1 the messages are printed
+#define PRINT 0 //If it is 1 the messages are printed
 
 
 void fun1 (int global_index){
   read_network();
+  while (1) {
+    /* code */
+  }
   for (int a = 0; a < QUANTUM_TICKS; ++a) /*it simulates the time clock signals*/
 	{
     if(PRINT == 1) printf ("Thread %d with priority %d\t from fun1 and remaining ticks %i\n", mythread_gettid(), mythread_getpriority(), getTicks());
@@ -56,7 +59,7 @@ int main(int argc, char *argv[])
     printf("thread failed to initialize\n");
     exit(-1);
   }
- read_network();
+  read_network();
   if((mythread_create(fun2,LOW_PRIORITY)) == -1){
     printf("thread failed to initialize\n");
     exit(-1);

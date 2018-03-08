@@ -50,8 +50,6 @@ void fun3 (int global_index){
 
 int main(int argc, char *argv[])
 {
-  int a,b=0;
-
   mythread_setpriority(HIGH_PRIORITY);
   read_network();
   if((mythread_create(fun1,LOW_PRIORITY)) == -1){
@@ -62,11 +60,11 @@ int main(int argc, char *argv[])
   if((mythread_create(fun2,LOW_PRIORITY)) == -1){
     printf("thread failed to initialize\n");
     exit(-1);
-  }/* only 2 threads for testing
+  }
   if((mythread_create(fun3,LOW_PRIORITY)) == -1){
     printf("thread failed to initialize\n");
     exit(-1);
-  }
+  }/* only 3 threads for testing
   if((mythread_create(fun1,HIGH_PRIORITY)) == -1){
     printf("thread failed to initialize\n");
     exit(-1);
@@ -77,22 +75,6 @@ int main(int argc, char *argv[])
     exit(-1);
   }
 */
-	/*
-
-  for (a=0; a<N; ++a) {
-     printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
-     for (b=0; b<30000000; ++b);
-  }
-
-  if((mythread_create(fun1,HIGH_PRIORITY)) == -1){
-    printf("thread failed to initialize\n");
-    exit(-1);
-  }
-  if((mythread_create(fun1,HIGH_PRIORITY)) == -1){
-    printf("thread failed to initialize\n");
-    exit(-1);
-  }
-	 */
   mythread_exit();
 
   printf("This program should never come here\n");

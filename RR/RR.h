@@ -46,8 +46,12 @@ int mythread_gettid(); /* Returns the thread id */
 
 int tick_minus();/*It substract 1 tick and it checks if there is no more ticks, returning 0*/
 int getTicks();/*It returns the number of remaining ticks (only for debugging)*/
-TCB* schedulerRR (int id);/* RR scheduler the new thread to be executed is returned*/
+TCB* schedulerRR ();/* RR scheduler the new thread to be executed is returned*/
 void timer_interrupt(int sig);/* Timer interrupt  */
 void activator_RR(TCB* actual, TCB* next);/*Activator with swapcontext*/
 void activator_FIFO(TCB* next);/*Activator with setcontext*/
+
+int blockSignals(); /*It blocks all the signals*/
+int unlockSignals(); /*It unlock the signals*/
+
 

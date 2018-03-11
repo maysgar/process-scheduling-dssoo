@@ -14,6 +14,8 @@
 #define PACK_TIME 1
 #define STARVATION 200
 
+static sigset_t maskval_interrupt,oldmask_interrupt;
+
 void timer_interrupt ();
 void init_interrupt();
 void disable_interrupt();

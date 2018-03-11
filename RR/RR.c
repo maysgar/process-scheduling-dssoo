@@ -114,13 +114,46 @@ void init_RR(){
 	aux.state = INIT;
 	aux.priority = LOW_PRIORITY;
 	aux.ticks = QUANTUM_TICKS;
+	aux.state = FREE;
+	aux.tid = 0;
+
+	t_state[0].state = INIT;
+	t_state[0].tid = 0;
+
+
+	if(getcontext(&aux.run_env) == -1)
+	{
+		perror("*** ERROR: getcontext in init_thread_lib");
+		exit(5);
+	}
+
+	for(int i=1; i<N; i++){
+		t_state[i].state = FREE;
+	}
+
+	printf("%i\n", aux.tid);
 	running = &aux;
+	printf("%i\n", running -> tid);
 
 	/* Initialize network and clock interrupts */
 	init_network_interrupt();
 	init_interrupt();
 }
 
+/*It blocks all the signals
+ * Return 0 in success and -1 otherwise*/
+int blockSignals(){
+	sigfillset( &maskval_interrupt );	/* Fill mask maskval_interrupt */
+	sigprocmask( SIG_BLOCK, &maskval_interrupt, &oldmask_interrupt );
+	return 0;
+}
+
+/*It unlock the signals
+ * Return 0 in success and -1 otherwise*/
+int unlockSignals(){
+	sigprocmask( SIG_SETMASK, &oldmask_interrupt, NULL );	/* Restore process signal mask set in oldmask_interrupt */
+	return 0;
+}
 
 /* Create and initialize a new thread with body fun_addr and one integer argument
  * It returns the position in the array of the new thread*/
@@ -164,7 +197,9 @@ int mythread_create (void (*fun_addr)(),int priority)
 	t_state[i].run_env.uc_stack.ss_flags = 0;
 	t_state[i].ticks = 3; /*inventado por mi*/
 
+	blockSignals(); /*block the signals while using the queue*/
 	enqueue(tqueue, &t_state[i]); /*enqueue the thread in the queue of threads*/
+	unlockSignals(); /*Unlock the signals*/
 	makecontext(&t_state[i].run_env, fun_addr, 1); /*create the new context*/
 	printf("\t\tQueue after inserting\n");
 	queue_print(tqueue);
@@ -183,15 +218,6 @@ int mythread_createRR (void (*fun_addr)(),int priority)
 		init_RR(); /*init the queue of threads*/
 		init=1;
 	}
-//  for (i=0; i<N; i++) /*search for a free position in the thread array*/
-//  {
-//      if (t_state[i].state == FREE) break;
-//  }
-//  if (i == N) /*the last position is not a valid one*/
-//  {
-//      return(-1);
-//  }
-
 	/*initialize the context of the thread which is going to be created*/
 	if(getcontext(&aux.run_env) == -1)
 	{
@@ -214,7 +240,9 @@ int mythread_createRR (void (*fun_addr)(),int priority)
 	aux.run_env.uc_stack.ss_flags = 0;
 	aux.ticks = 3; /*inventado por mi*/
 
+	blockSignals(); /*block the signals while using the queue*/
 	enqueue(tqueue, &aux); /*enqueue the thread in the queue of threads*/
+	unlockSignals(); /*Unlock the signals*/
 	makecontext(&aux.run_env, fun_addr, 1); /*create the new context*/
 	printf("\t\tQueue after inserting\n");
 	queue_print(tqueue);
@@ -234,17 +262,13 @@ void network_interrupt(int sig)
 
 /* Free terminated thread and exits */
 void mythread_exit() {
-	//int tid = mythread_gettid(); /*get the id of the current thread*/
 	int tid = mythread_gettid(); /*get the id of the current thread*/
 
 	printf("*** THREAD %d FINISHED\n", tid);
 
-	//t_state[tid].state = FREE; /*change the position of the array to free*/
 	free(t_state[tid].run_env.uc_stack.ss_sp); /*free memory  HABRÁ UE CAMBIARLO*/
 
 	running = schedulerRR(); /*get the next thread to be executed*/
-	//TCB* next = schedulerRR(tid); /*get the next thread to be executed*/
-	//running = &t_state[tid];
 	activator_FIFO(running); /*perform the context switch*/
 }
 
@@ -256,7 +280,9 @@ void mythread_next() {
 	printf("*** THREAD %d NO MORE TIME (ticks remaining: %i)\n", mythread_gettid(), running -> ticks);
 
 	next = schedulerRR(); /*get the next thread to be executed*/
+	blockSignals(); /*block the signals while using the queue*/
 	enqueue(tqueue, running); /*enqueue the thread in the queue of threads*/
+	unlockSignals(); /*Unlock the signals*/
 	memcpy(&aux, &running, sizeof(TCB *));
 	running = next;
 	activator_RR(aux, next); /*perform the context switch*/
@@ -276,7 +302,7 @@ int mythread_getpriority() {
 
 /* Get the current thread id.  */
 int mythread_gettid(){
-	if (!init) { init_mythreadlib(); init=1;}
+	if (!init) {init_mythreadlib(); init=1;}
 	return running->tid;
 }
 
@@ -306,7 +332,11 @@ TCB* schedulerRR(){
 		exit(1);
 	}
 	else{ /*return the next thread in the queue*/
-		return dequeue(tqueue); /*dequeue*/
+		TCB * aux;
+		blockSignals(); /*block the signals while using the queue*/
+		aux = dequeue(tqueue); /*dequeue*/
+		unlockSignals(); /*Unlock the signals*/
+		return aux;
 	}
 }
 
@@ -328,9 +358,7 @@ void timer_interrupt(int sig)
 
 void activator_RR(TCB* actual, TCB* next){
 	printf("*** SWAPCONTEXT FROM %i to %i\n", actual-> tid, next -> tid);
-	/*NO SE PORQUE FUNCIONA CON SET Y SIN SWAP*/
-	setcontext (&(next->run_env));
-	//if(swapcontext (&(actual->run_env), &(next->run_env)) == -1) printf("Swap error"); /*switch the context to the next thread*/
+	if(swapcontext (&(actual->run_env), &(next->run_env)) == -1) printf("Swap error"); /*switch the context to the next thread*/
 }
 
 /* Activator */

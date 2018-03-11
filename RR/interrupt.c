@@ -6,9 +6,6 @@
 #include <unistd.h>
 #include <interrupt.h>
 
-static sigset_t maskval_interrupt,oldmask_interrupt;
-
-
 void reset_timer(long usec) {
   struct itimerval quantum;
 

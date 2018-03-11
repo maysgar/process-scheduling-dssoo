@@ -20,7 +20,7 @@
 #define HIGH_PRIORITY 1
 #define SYSTEM 2
 
-#define PRINT 1//If it is 1 the messages are printed
+#define PRINT 0//If it is 1 the messages are printed
 
 /* Structure containing thread state  */
 typedef struct tcb{
@@ -50,4 +50,8 @@ TCB* schedulerRR ();/* RR scheduler the new thread to be executed is returned*/
 void timer_interrupt(int sig);/* Timer interrupt  */
 void activator_RR(TCB* actual, TCB* next);/*Activator with swapcontext*/
 void activator_FIFO(TCB* next);/*Activator with setcontext*/
+
+int blockSignals(); /*It blocks all the signals*/
+int unlockSignals(); /*It unlock the signals*/
+
 

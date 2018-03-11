@@ -20,7 +20,7 @@
 #define HIGH_PRIORITY 1
 #define SYSTEM 2
 
-#define PRINT 0//If it is 1 the messages are printed
+#define PRINT 1//If it is 1 the messages are printed
 
 /* Structure containing thread state  */
 typedef struct tcb{
@@ -46,7 +46,7 @@ int mythread_gettid(); /* Returns the thread id */
 
 int tick_minus();/*It substract 1 tick and it checks if there is no more ticks, returning 0*/
 int getTicks();/*It returns the number of remaining ticks (only for debugging)*/
-TCB* schedulerRR (int id);/* RR scheduler the new thread to be executed is returned*/
+TCB* schedulerRR ();/* RR scheduler the new thread to be executed is returned*/
 void timer_interrupt(int sig);/* Timer interrupt  */
 void activator_RR(TCB* actual, TCB* next);/*Activator with swapcontext*/
 void activator_FIFO(TCB* next);/*Activator with setcontext*/

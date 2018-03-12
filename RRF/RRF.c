@@ -9,7 +9,8 @@
 #include "queue.h"
 
 static TCB t_state[N]; /* Array of state thread control blocks: the process allows a maximum of N threads */
-static struct queue *tqueue; /*The queue which will have all the threads*/
+static struct queue *tqueue_high; /*The queue which will have all the threads with high priority*/
+static struct queue *tqueue_low; /*The queue which will have all the threads with low priority*/
 
 static TCB* running; /* Current running thread */
 static int current = 0;
@@ -30,7 +31,8 @@ void idle_function(){
 void init_mythreadlib() {
 	int i;
 
-	tqueue = queue_new(); //I initialize the queue
+	tqueue_low = queue_new(); //I initialize the queues
+	tqueue_high = queue_new(); //I initialize the queues
 
 	/* Create context for the idle thread */
 	if(getcontext(&idle.run_env) == -1)
@@ -81,65 +83,6 @@ void init_mythreadlib() {
 	init_interrupt();
 }
 
-/*Initialize the queue of processes*/
-void init_RR(){
-	tqueue = queue_new(); //I initialize the queue
-	TCB aux;
-
-	/* Create context for the idle thread */
-	if(getcontext(&idle.run_env) == -1)
-	{
-		perror("*** ERROR: getcontext in init_thread_lib");
-		exit(-1);
-	}
-
-	idle.state = IDLE;
-	idle.priority = SYSTEM;
-	idle.function = idle_function;
-	idle.run_env.uc_stack.ss_sp = (void *)(malloc(STACKSIZE));
-	idle.tid = -1;
-
-	if(idle.run_env.uc_stack.ss_sp == NULL)
-	{
-		printf("*** ERROR: thread failed to get stack space\n");
-		exit(-1);
-	}
-
-	idle.run_env.uc_stack.ss_size = STACKSIZE;
-	idle.run_env.uc_stack.ss_flags = 0;
-	idle.ticks = QUANTUM_TICKS;
-
-	makecontext(&idle.run_env, idle_function, 1);
-
-	aux.state = INIT;
-	aux.priority = LOW_PRIORITY;
-	aux.ticks = QUANTUM_TICKS;
-	aux.state = FREE;
-	aux.tid = 0;
-
-	t_state[0].state = INIT;
-	t_state[0].tid = 0;
-
-
-	if(getcontext(&aux.run_env) == -1)
-	{
-		perror("*** ERROR: getcontext in init_thread_lib");
-		exit(5);
-	}
-
-	for(int i=1; i<N; i++){
-		t_state[i].state = FREE;
-	}
-
-	printf("%i\n", aux.tid);
-	running = &aux;
-	printf("%i\n", running -> tid);
-
-	/* Initialize network and clock interrupts */
-	init_network_interrupt();
-	init_interrupt();
-}
-
 /*It blocks all the signals
  * Return 0 in success and -1 otherwise*/
 int blockSignals(){
@@ -163,7 +106,7 @@ int mythread_create (void (*fun_addr)(),int priority)
 
 	if (!init) /*if the library is not initialized*/
 	{
-		init_RR(); /*init the queue of threads*/
+		init_mythreadlib(); /*init the queue of threads*/
 		init=1;
 	}
 	for (i=0; i<N; i++) /*search for a free position in the thread array*/
@@ -198,55 +141,22 @@ int mythread_create (void (*fun_addr)(),int priority)
 	t_state[i].ticks = 3; /*inventado por mi*/
 
 	blockSignals(); /*block the signals while using the queue*/
-	enqueue(tqueue, &t_state[i]); /*enqueue the thread in the queue of threads*/
+	if(priority == LOW_PRIORITY){ /*Low priority thread*/
+		enqueue(tqueue_low, &t_state[i]); /*enqueue the thread in the queue of low priority threads*/
+	}
+	else if(priority == HIGH_PRIORITY){ /*High priority thread*/
+		enqueue(tqueue_high, &t_state[i]); /*enqueue the thread in the queue of high priority threads*/
+	}
+	else{
+		printf("SYSTEM priority thread (IT SHOULD NOT ARRIVE HERE)\n");
+	}
 	unlockSignals(); /*Unlock the signals*/
 	makecontext(&t_state[i].run_env, fun_addr, 1); /*create the new context*/
-	printf("\t\tQueue after inserting\n");
-	queue_print(tqueue);
+	printf("\n\n\t\tQueue of HIGH priority after inserting\n");
+	queue_print(tqueue_high);
+	printf("\n\n\t\tQueue of LOW priority after inserting\n");
+	queue_print(tqueue_low);
 	return i;
-} /****** End my_thread_create() ******/
-
-/* Problemas con el puto puntero*/
-int mythread_createRR (void (*fun_addr)(),int priority)
-{
-	//int i;
-	TCB aux;
-
-	if (!init) /*if the library is not initialized*/
-	{
-		//init_mythreadlib();
-		init_RR(); /*init the queue of threads*/
-		init=1;
-	}
-	/*initialize the context of the thread which is going to be created*/
-	if(getcontext(&aux.run_env) == -1)
-	{
-		perror("*** ERROR: getcontext in my_thread_create");
-		exit(-1);
-	}
-
-	/*initialize the fields of the thread*/
-	aux.state = INIT;
-	aux.priority = priority; /*given by input to this method*/
-	aux.function = fun_addr; /*given by input to this method*/
-	aux.run_env.uc_stack.ss_sp = (void *)(malloc(STACKSIZE));
-	if(aux.run_env.uc_stack.ss_sp == NULL)
-	{
-		printf("*** ERROR: thread failed to get stack space\n");
-		exit(-1);
-	}
-	aux.tid = idCount++;
-	aux.run_env.uc_stack.ss_size = STACKSIZE;
-	aux.run_env.uc_stack.ss_flags = 0;
-	aux.ticks = 3; /*inventado por mi*/
-
-	blockSignals(); /*block the signals while using the queue*/
-	enqueue(tqueue, &aux); /*enqueue the thread in the queue of threads*/
-	unlockSignals(); /*Unlock the signals*/
-	makecontext(&aux.run_env, fun_addr, 1); /*create the new context*/
-	printf("\t\tQueue after inserting\n");
-	queue_print(tqueue);
-	return idCount;
 } /****** End my_thread_create() ******/
 
 /* Read network syscall */
@@ -268,7 +178,16 @@ void mythread_exit() {
 
 	free(t_state[tid].run_env.uc_stack.ss_sp); /*free memory  HABRÁ UE CAMBIARLO*/
 
-	running = schedulerRR(); /*get the next thread to be executed*/
+	if(running -> priority == LOW_PRIORITY){ /*Low priority thread*/
+		running = schedulerRR(); /*get the next thread to be executed from the low priority queue*/
+	}
+	else if(running -> priority == HIGH_PRIORITY){ /**High priority thread*/
+		running = schedulerFIFO(); /*get the next thread to be executed from the high priority queue*/
+	}
+	else{
+		printf("SYSTEM priority thread (IT SHOULD NOT ARRIVE HERE)\n");
+	}
+	count = 0;
 	activator_FIFO(running); /*perform the context switch*/
 }
 
@@ -281,7 +200,7 @@ void mythread_next() {
 
 	next = schedulerRR(); /*get the next thread to be executed*/
 	blockSignals(); /*block the signals while using the queue*/
-	enqueue(tqueue, running); /*enqueue the thread in the queue of threads*/
+	enqueue(tqueue_low, running); /*enqueue the thread in the queue of threads*/
 	unlockSignals(); /*Unlock the signals*/
 	memcpy(&aux, &running, sizeof(TCB *));
 	running = next;
@@ -308,8 +227,10 @@ int mythread_gettid(){
 
 /*It substract 1 tick and it checks if there is no more ticks, returning 0*/
 int tick_minus(){
-	//int tid = mythread_gettid(); /*get the id of the current thread*/
-	//t_state[tid].ticks--; /* store the remaining ticks*/
+	if(queue_empty(tqueue_high) == 0 && running -> priority == LOW_PRIORITY){ /*check if I have to change from one queue to the other one*/
+		changeQueue(); /*change from the low priority queue to the high one*/
+		return 1;
+	}
 	running -> ticks--; /* store the remaining ticks*/
 	if(running -> ticks < 1) /*check if the thread has finished its execution's time*/
 	{
@@ -327,14 +248,30 @@ int getTicks(){
 /* RR scheduler
  * the new thread to be executed is returned*/
 TCB* schedulerRR(){
-	if(queue_empty(tqueue) == 1){ /*check if there are more threads to execute*/
+	if(queue_empty(tqueue_low) == 1){ /*check if there are more threads to execute*/
 		printf("FINISH\n");
 		exit(1);
 	}
 	else{ /*return the next thread in the queue*/
 		TCB * aux;
 		blockSignals(); /*block the signals while using the queue*/
-		aux = dequeue(tqueue); /*dequeue*/
+		aux = dequeue(tqueue_low); /*dequeue*/
+		unlockSignals(); /*Unlock the signals*/
+		return aux;
+	}
+}
+
+/* FIFO scheduler from the high priority queue
+ * the new thread to be executed is returned*/
+TCB* schedulerFIFO(){
+	if(queue_empty(tqueue_high) == 1){ /*check if there are more threads to execute*/
+		printf("FINISH (high priority queue)\n");
+		return schedulerRR(); /*the next thread to be executed is the one of the low priority queue*/
+	}
+	else{ /*return the next thread in the queue*/
+		TCB * aux;
+		blockSignals(); /*block the signals while using the queue*/
+		aux = dequeue(tqueue_high); /*dequeue*/
 		unlockSignals(); /*Unlock the signals*/
 		return aux;
 	}
@@ -343,14 +280,16 @@ TCB* schedulerRR(){
 /* Timer interrupt  */
 void timer_interrupt(int sig)
 {
+	printf("Timer\n");
 	if(PRINT == 1) printf ("Thread %d with priority %d\t remaining ticks %i\n", mythread_gettid(), mythread_getpriority(0), getTicks());
 	if(tick_minus() == 0){ /*checking if the thread has finished its execution*/
 		mythread_exit(); /*I finish the thread*/
 		return;
 	}
 	count ++;
-	if(count == QUANTUM_TICKS) /*RR time slice consumed*/
+	if( (count == QUANTUM_TICKS) && (running -> priority == LOW_PRIORITY) ) /*RR time slice consumed for low priority*/
 	{
+		printf("Dentro\n");
 		count = 0; /*restore the count*/
 		mythread_next(); /*take the next thread and store the current one in the queue*/
 	}
@@ -366,4 +305,13 @@ void activator_FIFO(TCB* next){
 	printf("*** THREAD %i FINISHED: SET CONTEXT OF %i\n", running-> tid, next -> tid);
 	setcontext (&(next->run_env));
 	printf("mythread_free: After setcontext, should never get here!!...\n");
+}
+
+ /*change from the low priority queue to the high one*/
+
+int changeQueue(){
+	running -> ticks += current; /*restore the ticks from the low priority thread*/
+	running = schedulerFIFO(); /*get the next thread to be executed from the high priority queue*/
+	activator_FIFO(running); /*perform the context switch*/
+	return 0;
 }

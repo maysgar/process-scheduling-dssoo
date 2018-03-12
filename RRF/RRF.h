@@ -20,7 +20,7 @@
 #define HIGH_PRIORITY 1
 #define SYSTEM 2
 
-#define PRINT 0//If it is 1 the messages are printed
+#define PRINT 0 //If it is 1 the messages are printed
 
 /* Structure containing thread state  */
 typedef struct tcb{
@@ -44,14 +44,14 @@ void mythread_setpriority(int priority); /* Sets the thread priority */
 int mythread_getpriority(); /* Returns the priority of calling thread*/
 int mythread_gettid(); /* Returns the thread id */
 
+int changeQueue(); /*change from the low priority queue to the high one*/
 int tick_minus();/*It substract 1 tick and it checks if there is no more ticks, returning 0*/
 int getTicks();/*It returns the number of remaining ticks (only for debugging)*/
-TCB* schedulerRR ();/* RR scheduler the new thread to be executed is returned*/
+TCB* schedulerFIFO(); /*get the next thread to be executedfrom the high priority queue*/
+TCB* schedulerRR ();/* RR scheduler the new thread to be executed is returned from the low priority queue*/
 void timer_interrupt(int sig);/* Timer interrupt  */
 void activator_RR(TCB* actual, TCB* next);/*Activator with swapcontext*/
 void activator_FIFO(TCB* next);/*Activator with setcontext*/
 
 int blockSignals(); /*It blocks all the signals*/
 int unlockSignals(); /*It unlock the signals*/
-
-

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "RRF.h"
 
 
@@ -43,7 +44,7 @@ void fun3 (int global_index){
 
 int main(int argc, char *argv[])
 {
-  mythread_setpriority(HIGH_PRIORITY);
+  //mythread_setpriority(HIGH_PRIORITY);
   read_network();
   if((mythread_create(fun1,LOW_PRIORITY)) == -1){
     printf("thread failed to initialize\n");
@@ -54,7 +55,8 @@ int main(int argc, char *argv[])
     printf("thread failed to initialize\n");
     exit(-1);
   }
-  if((mythread_create(fun1,LOW_PRIORITY)) == -1){
+  //sleep(10);
+  if((mythread_create(fun1,HIGH_PRIORITY)) == -1){
     printf("thread failed to initialize\n");
     exit(-1);
   }/* only 3 threads for testing

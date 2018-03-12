@@ -20,7 +20,7 @@
 #define HIGH_PRIORITY 1
 #define SYSTEM 2
 
-#define PRINT 0 //If it is 1 the messages are printed
+#define PRINT 1 //If it is 1 the messages are printed
 
 /* Structure containing thread state  */
 typedef struct tcb{

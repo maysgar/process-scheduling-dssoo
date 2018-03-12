@@ -263,13 +263,14 @@ void network_interrupt(int sig)
 /* Free terminated thread and exits */
 void mythread_exit() {
 	int tid = mythread_gettid(); /*get the id of the current thread*/
+	TCB * aux;
 
 	printf("*** THREAD %d FINISHED\n", tid);
 
 	free(t_state[tid].run_env.uc_stack.ss_sp); /*free memory  HABRÁ UE CAMBIARLO*/
 
-	running = schedulerRR(); /*get the next thread to be executed*/
-	activator_FIFO(running); /*perform the context switch*/
+	aux = schedulerRR(); /*get the next thread to be executed*/
+	activator_FIFO(aux); /*perform the context switch*/
 }
 
 /* We change the thread to the next one */
@@ -284,7 +285,6 @@ void mythread_next() {
 	enqueue(tqueue, running); /*enqueue the thread in the queue of threads*/
 	unlockSignals(); /*Unlock the signals*/
 	memcpy(&aux, &running, sizeof(TCB *));
-	running = next;
 	activator_RR(aux, next); /*perform the context switch*/
 }
 
@@ -356,12 +356,14 @@ void timer_interrupt(int sig)
 
 void activator_RR(TCB* actual, TCB* next){
 	printf("*** SWAPCONTEXT FROM %i to %i\n", actual-> tid, next -> tid);
+	running = next;
 	if(swapcontext (&(actual->run_env), &(next->run_env)) == -1) printf("Swap error"); /*switch the context to the next thread*/
 }
 
 /* Activator */
 void activator_FIFO(TCB* next){
 	printf("*** THREAD %i FINISHED: SET CONTEXT OF %i\n", running-> tid, next -> tid);
+	running = next;
 	setcontext (&(next->run_env));
 	printf("mythread_free: After setcontext, should never get here!!...\n");
 }

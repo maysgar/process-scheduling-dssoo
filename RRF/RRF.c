@@ -173,22 +173,23 @@ void network_interrupt(int sig)
 /* Free terminated thread and exits */
 void mythread_exit() {
 	int tid = mythread_gettid(); /*get the id of the current thread*/
+	TCB * aux;
 
 	printf("*** THREAD %d FINISHED\n", tid);
 
 	free(t_state[tid].run_env.uc_stack.ss_sp); /*free memory  HABRÁ UE CAMBIARLO*/
 
 	if(running -> priority == LOW_PRIORITY){ /*Low priority thread*/
-		running = schedulerRR(); /*get the next thread to be executed from the low priority queue*/
+		aux = schedulerRR(); /*get the next thread to be executed from the low priority queue*/
 	}
 	else if(running -> priority == HIGH_PRIORITY){ /**High priority thread*/
-		running = schedulerFIFO(); /*get the next thread to be executed from the high priority queue*/
+		aux = schedulerFIFO(); /*get the next thread to be executed from the high priority queue*/
 	}
 	else{
 		printf("SYSTEM priority thread (IT SHOULD NOT ARRIVE HERE)\n");
 	}
 	count = 0;
-	activator_FIFO(running); /*perform the context switch*/
+	activator_FIFO(aux); /*perform the context switch*/
 }
 
 /* We change the thread to the next one */
@@ -203,7 +204,6 @@ void mythread_next() {
 	enqueue(tqueue_low, running); /*enqueue the thread in the queue of threads*/
 	unlockSignals(); /*Unlock the signals*/
 	memcpy(&aux, &running, sizeof(TCB *));
-	running = next;
 	activator_RR(aux, next); /*perform the context switch*/
 }
 
@@ -280,7 +280,6 @@ TCB* schedulerFIFO(){
 /* Timer interrupt  */
 void timer_interrupt(int sig)
 {
-	printf("Timer\n");
 	if(PRINT == 1) printf ("Thread %d with priority %d\t remaining ticks %i\n", mythread_gettid(), mythread_getpriority(0), getTicks());
 	if(tick_minus() == 0){ /*checking if the thread has finished its execution*/
 		mythread_exit(); /*I finish the thread*/
@@ -289,7 +288,6 @@ void timer_interrupt(int sig)
 	count ++;
 	if( (count == QUANTUM_TICKS) && (running -> priority == LOW_PRIORITY) ) /*RR time slice consumed for low priority*/
 	{
-		printf("Dentro\n");
 		count = 0; /*restore the count*/
 		mythread_next(); /*take the next thread and store the current one in the queue*/
 	}
@@ -297,12 +295,14 @@ void timer_interrupt(int sig)
 
 void activator_RR(TCB* actual, TCB* next){
 	printf("*** SWAPCONTEXT FROM %i to %i\n", actual-> tid, next -> tid);
+	running = next;
 	if(swapcontext (&(actual->run_env), &(next->run_env)) == -1) printf("Swap error"); /*switch the context to the next thread*/
 }
 
 /* Activator */
 void activator_FIFO(TCB* next){
 	printf("*** THREAD %i FINISHED: SET CONTEXT OF %i\n", running-> tid, next -> tid);
+	running = next;
 	setcontext (&(next->run_env));
 	printf("mythread_free: After setcontext, should never get here!!...\n");
 }
@@ -311,6 +311,9 @@ void activator_FIFO(TCB* next){
 
 int changeQueue(){
 	running -> ticks += current; /*restore the ticks from the low priority thread*/
+	blockSignals(); /*block the signals while using the queue*/
+	enqueue(tqueue_low, running); /*enqueue the thread in the queue of low priority threads*/
+	unlockSignals(); /*Unlock the signals*/
 	running = schedulerFIFO(); /*get the next thread to be executed from the high priority queue*/
 	activator_FIFO(running); /*perform the context switch*/
 	return 0;

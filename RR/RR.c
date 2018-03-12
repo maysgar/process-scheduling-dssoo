@@ -308,8 +308,6 @@ int mythread_gettid(){
 
 /*It substract 1 tick and it checks if there is no more ticks, returning 0*/
 int tick_minus(){
-	//int tid = mythread_gettid(); /*get the id of the current thread*/
-	//t_state[tid].ticks--; /* store the remaining ticks*/
 	running -> ticks--; /* store the remaining ticks*/
 	if(running -> ticks < 1) /*check if the thread has finished its execution's time*/
 	{

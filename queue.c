@@ -3,7 +3,7 @@
 #include  <string.h>
 
 #include "queue.h"
-#include "mythread.h"
+#include "RR.h"
 
 struct queue* enqueue(struct queue* s, void * i)
 {

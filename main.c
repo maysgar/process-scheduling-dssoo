@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "mythread.h"
+#include "RR.h"
 
 
 void fun1 (int global_index){

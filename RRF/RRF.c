@@ -156,6 +156,9 @@ int mythread_create (void (*fun_addr)(),int priority)
 	queue_print(tqueue_high);
 	printf("\n\n\t\tQueue of LOW priority after inserting\n");
 	queue_print(tqueue_low);
+	if(priority == HIGH_PRIORITY){ /*High priority thread*/
+		changeQueue(); /*change from the low priority queue to the high one*/
+	}
 	return i;
 } /****** End my_thread_create() ******/
 
@@ -227,10 +230,6 @@ int mythread_gettid(){
 
 /*It substract 1 tick and it checks if there is no more ticks, returning 0*/
 int tick_minus(){
-	if(queue_empty(tqueue_high) == 0 && running -> priority == LOW_PRIORITY){ /*check if I have to change from one queue to the other one*/
-		changeQueue(); /*change from the low priority queue to the high one*/
-		return 1;
-	}
 	running -> ticks--; /* store the remaining ticks*/
 	if(running -> ticks < 1) /*check if the thread has finished its execution's time*/
 	{
@@ -247,6 +246,7 @@ int getTicks(){
 
 /* RR scheduler
  * the new thread to be executed is returned*/
+
 TCB* schedulerRR(){
 	if(queue_empty(tqueue_low) == 1){ /*check if there are more threads to execute*/
 		printf("FINISH\n");
@@ -277,18 +277,28 @@ TCB* schedulerFIFO(){
 	}
 }
 
+TCB* scheduler_final(){
+
+}
+
 /* Timer interrupt  */
 void timer_interrupt(int sig)
 {
 	if(PRINT == 1) printf ("Thread %d with priority %d\t remaining ticks %i\n", mythread_gettid(), mythread_getpriority(0), getTicks());
 	if(tick_minus() == 0){ /*checking if the thread has finished its execution*/
 		mythread_exit(); /*I finish the thread*/
+		TCB * next;
+		next = scheduler_final();
+
 		return;
 	}
-	count ++;
-	if( (count == QUANTUM_TICKS) && (running -> priority == LOW_PRIORITY) ) /*RR time slice consumed for low priority*/
+	if(running -> priority == LOW_PRIORITY){ /*check if count or not RR slice*/
+		count ++;
+	}
+	if( (running -> priority == LOW_PRIORITY)  &&  (count == QUANTUM_TICKS)) /*RR time slice consumed for low priority*/
 	{
 		count = 0; /*restore the count*/
+
 		mythread_next(); /*take the next thread and store the current one in the queue*/
 	}
 }

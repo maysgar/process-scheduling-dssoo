@@ -141,7 +141,6 @@ int mythread_create (void (*fun_addr)(),int priority)
 	queue_print(tqueue_low);
 	if(priority == HIGH_PRIORITY && running -> priority != HIGH_PRIORITY){ /*High priority thread*/
 		printf("Aqui\n");
-		running -> state = WAITING;
 		TCB* next = scheduler(); /*get the next thread to be executed*/
 		activator(next); /*I initialize the next process*/
 	}
@@ -186,7 +185,7 @@ int mythread_getpriority() {
 /* Get the current thread id.  */
 int mythread_gettid(){
 	if (!init) {init_mythreadlib(); init=1;}
-	return running->tid;
+	return current;
 }
 
 TCB* scheduler(){
@@ -202,7 +201,7 @@ TCB* scheduler(){
 		enable_interrupt(); /*Unlock the signals*/
 		return aux;
 	}
-	else if((running -> priority == LOW_PRIORITY) && (running -> state == WAITING)){ /*change of queues*/
+	else if((running -> priority == LOW_PRIORITY) && (queue_empty(tqueue_high) == 0)){ /*change of queues*/
 		TCB * aux;
 		disable_interrupt(); /*block the signals while using the queue*/
 		aux = dequeue(tqueue_high); /*dequeue*/
@@ -234,21 +233,12 @@ void timer_interrupt(int sig)
 }
 
 void activator(TCB* next){
-	if( (running -> priority == LOW_PRIORITY) && (running -> state == WAITING) ){ /*change of queues*/
-		TCB* aux;
-		disable_interrupt(); /*block the signals while using the queue*/
-		enqueue(tqueue_low, running); /*enqueue the thread in the queue of low priority threads*/
-		enable_interrupt(); /*Unlock the signals*/
-		memcpy(&aux, &running, sizeof(TCB *));
-		running = next;
-		if(swapcontext (&(aux->run_env), &(next->run_env)) == -1) printf("Swap error"); /*switch the context to the next thread*/
-		return;
-	}
-	else if( (queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 1) /*the high priority queue is empty but not the low*/
+	if( (queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 1) /*the high priority queue is empty but not the low*/
 					 && (running -> priority == HIGH_PRIORITY || running -> priority == SYSTEM)){ /*no more high priority processes*/
 		TCB* aux;
 		memcpy(&aux, &running, sizeof(TCB *));
 		running = next;
+		current = running -> tid;
 		setcontext (&(next->run_env));
 		return;
 	}
@@ -260,6 +250,7 @@ void activator(TCB* next){
 		enable_interrupt(); /*Unlock the signals*/
 		memcpy(&aux, &running, sizeof(TCB *));
 		running = next;
+		current = running -> tid;
 		if(swapcontext (&(aux->run_env), &(next->run_env)) == -1) printf("Swap error"); /*switch the context to the next thread*/
 		return;
 	}

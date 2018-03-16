@@ -139,7 +139,7 @@ int mythread_create (void (*fun_addr)(),int priority)
 	queue_print(tqueue_high);
 	printf("\n\n\t\tQueue of LOW priority after inserting\n");
 	queue_print(tqueue_low);
-	if(priority == HIGH_PRIORITY){ /*High priority thread*/
+	if(priority == HIGH_PRIORITY && running -> priority != HIGH_PRIORITY){ /*High priority thread*/
 		printf("Aqui\n");
 		running -> state = WAITING;
 		TCB* next = scheduler(); /*get the next thread to be executed*/

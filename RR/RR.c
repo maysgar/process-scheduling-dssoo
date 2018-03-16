@@ -17,6 +17,9 @@ static TCB* running; /* Current running thread */
 static int init = 0;
 static int count = 0; /*to know in what RR tick are we*/
 
+static int current = 0;
+
+
 /* Thread control block for the idle thread */
 TCB idle;
 
@@ -167,7 +170,7 @@ int mythread_getpriority() {
 /* Get the current thread id.  */
 int mythread_gettid(){
 	if (!init) {init_mythreadlib(); init=1;}
-	return running->tid;
+	return current;
 }
 
 /* RR scheduler
@@ -191,6 +194,7 @@ void activator(TCB* next){
 	if(running -> state == FREE){ /*The process has finished*/
 		printf("*** THREAD %i FINISHED: SET CONTEXT OF %i\n", running-> tid, next -> tid);
 		running = next;
+		current = running -> tid;
 		setcontext (&(next->run_env));
 		printf("mythread_free: After setcontext, should never get here!!...\n");
 		return;;
@@ -203,6 +207,7 @@ void activator(TCB* next){
 		enable_interrupt(); /*Unlock the signals*/
 		memcpy(&aux, &running, sizeof(TCB *));
 		running = next;
+		current = running -> tid;
 		if(swapcontext (&(aux->run_env), &(next->run_env)) == -1) printf("Swap error"); /*switch the context to the next thread*/
 		return;
 	}

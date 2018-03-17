@@ -156,12 +156,11 @@ it should leave the CPU and introduced in a waiting queue
  */
 int read_network()
 {
-	TCB * next;
 	TCB* aux;
 	if(PRINT == 1) printf ("Thread %d with priority %d\t calls to the read_network\n", mythread_gettid(), mythread_getpriority(0));
-	current -> state = WAITING;
+	//running -> state = WAITING;
 	
-	next = scheduler(); //falta en caso de que solo quedan las mierdas de la waiting queue
+	TCB* next = scheduler(); //falta el caso de que solo quedan las mierdas de la waiting queue
 
 	printf("*** SWAPCONTEXT FROM %i to %i\n", running-> tid, next -> tid);
 	/* Thread leaves the CPU & in introduced to the waiting queue */

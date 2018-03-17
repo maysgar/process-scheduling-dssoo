@@ -193,7 +193,8 @@ TCB* scheduler(){
 		printf("FINISH\n");
 		exit(1);
 	}
-	else if( (queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 1) /*the high priority queue is empty but not the low*/
+	else if( (queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 1) /*the high priority 
+	is empty but not the low*/
 					&& (running -> priority == HIGH_PRIORITY)){ /*no more high priority processes*/
 		TCB * aux;
 		disable_interrupt(); /*block the signals while using the queue*/

@@ -78,6 +78,7 @@ void init_mythreadlib() {
 	running = &t_state[0];
 
 	/* Initialize network and clock interrupts */
+	printf("Initialize network and clock interrupt\n");
 	init_network_interrupt();
 	init_interrupt();
 }
@@ -233,6 +234,7 @@ void timer_interrupt(int sig)
 	if( (running -> priority == LOW_PRIORITY)  &&  (count == QUANTUM_TICKS)) /*RR time slice consumed for low priority*/
 	{
 		count = 0; /*restore the count*/
+		printf("LOW PRIORITY thread finished its RR ticks, we do a change\n");
 		TCB* next = scheduler(); /*get the next thread to be executed*/
 		activator(next); /*I initialize the next process*/
 	}

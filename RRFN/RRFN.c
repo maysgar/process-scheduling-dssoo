@@ -158,9 +158,10 @@ int read_network()
 {
 	TCB* aux;
 	if(PRINT == 1) printf ("Thread %d with priority %d\t calls to the read_network\n", mythread_gettid(), mythread_getpriority(0));
+	printf("*** THREAD %d READ FROM NETWORK\n", mythread_gettid());
 	//running -> state = WAITING;
 	
-	TCB* next = scheduler(); //falta el caso de que solo quedan las mierdas de la waiting queue
+	TCB* next = scheduler(); //falta el caso en el que solo quedan las mierdas de la waiting queue
 
 	printf("*** SWAPCONTEXT FROM %i to %i\n", running-> tid, next -> tid);
 	/* Thread leaves the CPU & in introduced to the waiting queue */
@@ -196,6 +197,7 @@ void network_interrupt(int sig)
 	if(aux -> priority == LOW_PRIORITY){
 		enqueue(tqueue_low, aux); /* enqueue thread in the low priority ready queue */
 	}
+	printf("*** THREAD %d READY\n", mythread_gettid());
 	//TCB* next = scheduler(); /*get the next thread to be executed*/
 	//activator(next); /*I initialize the next process*/
 }
@@ -248,17 +250,24 @@ TCB* scheduler(){
 		enable_interrupt(); /*Unlock the signals*/
 		return aux;
 	}
-	else if((running -> priority == LOW_PRIORITY) && (queue_empty(tqueue_high) == 0)){ /*change of queues*/
+	else if((running -> priority == LOW_PRIORITY) && (queue_empty(tqueue_high) == 0)){ /*change of queues*/ /* cambiar de baja prioridad a uno de alta que acaba de llegar*/
 		TCB * aux;
 		disable_interrupt(); /*block the signals while using the queue*/
 		aux = dequeue(tqueue_high); /*dequeue*/
 		enable_interrupt(); /*Unlock the signals*/
 		return aux;
 	}
-	else if(running -> priority == LOW_PRIORITY){ /*RR change*/
+	else if(running -> priority == LOW_PRIORITY){ /*RR change*/ /* cambiar uno de baja prioridad a otro de baja */
 		TCB * aux;
 		disable_interrupt(); /*block the signals while using the queue*/
 		aux = dequeue(tqueue_low); /*dequeue*/
+		enable_interrupt(); /*Unlock the signals*/
+		return aux;
+	}
+	else if(running -> priority == HIGH_PRIORITY){ /*RR change*/ /* cambiar uno de baja prioridad a otro de baja */
+		TCB * aux;
+		disable_interrupt(); /*block the signals while using the queue*/
+		aux = dequeue(tqueue_high); /*dequeue*/
 		enable_interrupt(); /*Unlock the signals*/
 		return aux;
 	}
@@ -277,6 +286,7 @@ void timer_interrupt(int sig)
 		TCB* next = scheduler(); /*get the next thread to be executed*/
 		activator(next); /*I initialize the next process*/
 	}
+	//no se si hace falta condicion para el IDLE thread
 }
 
 void activator(TCB* next){
@@ -289,7 +299,7 @@ void activator(TCB* next){
 		setcontext (&(next->run_env));
 		return;
 	}
-	else if(running -> priority == LOW_PRIORITY){/*RR change*/
+	else if(running -> priority == LOW_PRIORITY){/*RR change*/ /* cambiamos baja prioridad (sin acabar) por cualquiera */
 		TCB* aux;
 		printf("*** SWAPCONTEXT FROM %i to %i\n", running-> tid, next -> tid);
 		disable_interrupt(); /*block the signals while using the queue*/
@@ -301,4 +311,7 @@ void activator(TCB* next){
 		if(swapcontext (&(aux->run_env), &(next->run_env)) == -1) printf("Swap error"); /*switch the context to the next thread*/
 		return;
 	}
+	//si queremos cambiar uno de baja prioridad (acabado) por cualquierda
+	//si queremos cambiar uno de alta prioridad (sin acabar) por otro de alta prioridad
+	//si queremos cambiar uno de alta prioridad (acabado) por otro de alta prioridad (DEBERIA ESTAR INCLUIDO EN EL PRIMER IF???)
 }

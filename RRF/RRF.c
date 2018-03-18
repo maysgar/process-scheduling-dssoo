@@ -140,7 +140,8 @@ int mythread_create (void (*fun_addr)(),int priority)
 	printf("\n\n\t\tQueue of LOW priority after inserting\n");
 	queue_print(tqueue_low);
 	if(priority == HIGH_PRIORITY && running -> priority != HIGH_PRIORITY){ /*High priority thread*/
-		printf("Aqui\n");
+		printf("Thread creado de ALTA prioridad, lo cambiamos por el running de BAJA o IDLE\n");
+		//running -> ticks += current; /* restore ticks from the low priority thread */ ??commit holaquetal
 		TCB* next = scheduler(); /*get the next thread to be executed*/
 		activator(next); /*I initialize the next process*/
 	}
@@ -167,6 +168,7 @@ void mythread_exit() {
 	free(t_state[tid].run_env.uc_stack.ss_sp); /*free memory  HABRÁ UE CAMBIARLO*/
 
 	TCB* next = scheduler(); /*get the next thread to be executed*/
+	//count = 0; ?? commit holaquetal
 	activator(next); /*perform the context switch*/
 }
 
@@ -243,7 +245,19 @@ void activator(TCB* next){
 		setcontext (&(next->run_env));
 		return;
 	}
-	else if( (running -> priority == LOW_PRIORITY)){/*RR change*/
+	else if((running -> priority == LOW_PRIORITY) && next -> priority == HIGH_PRIORITY){ /* llega un thread de ALTA mientras uno de BAJA se ejectuta*/
+		TCB* aux;
+		printf("*** SWAPCONTEXT FROM %i to %i\n", running-> tid, next -> tid);
+		disable_interrupt(); /*block the signals while using the queue*/
+		enqueue(tqueue_low, running); /*enqueue*/
+		enable_interrupt(); /*Unlock the signals*/
+		memcpy(&aux, &running, sizeof(TCB *));
+		running = next;
+		current = running -> tid;
+		setcontext (&(next->run_env));
+		return;
+	}
+	else if(running -> priority == LOW_PRIORITY){/*RR change*/
 		TCB* aux;
 		printf("*** SWAPCONTEXT FROM %i to %i\n", running-> tid, next -> tid);
 		disable_interrupt(); /*block the signals while using the queue*/

@@ -142,9 +142,9 @@ int mythread_create (void (*fun_addr)(),int priority)
 	//printf("\n\n\t\tQueue of LOW priority after inserting\n");
 	//queue_print(tqueue_low);
 	if(priority == HIGH_PRIORITY && running -> priority != HIGH_PRIORITY){ /*High priority thread*/
-		//printf("Thread creado de ALTA prioridad, lo cambiamos por el running de BAJA o IDLE\n");
 		//running -> ticks += current; /* restore ticks from the low priority thread */ ??commit holaquetal
-		TCB* next = scheduler(); /*get the next thread to be executed*/
+		TCB* next = scheduler(); /* get the next thread to be executed */
+		printf("READ %d PREEMPTED: SET CONTEXT OF %d\n", running -> tid, next -> tid);
 		activator(next); /*I initialize the next process*/
 	}
 	return i;
@@ -169,6 +169,7 @@ void mythread_exit() {
 	t_state[tid].state = FREE;
 	free(t_state[tid].run_env.uc_stack.ss_sp); /*free memory  HABRÁ QUE CAMBIARLO*/
 	TCB* next = scheduler(); /*get the next thread to be executed*/
+	printf("THREAD %d FINISHED: SET CONTEXT OF %d\n", tid, next -> tid);
 	//count = 0; ?? commit holaquetal
 	//printf("MYTHREAD_EXIT: A thread finishes so we execute the next one %d with priority %d\n", next -> tid, next -> priority);
 	activator(next); /*perform the context switch*/

@@ -193,6 +193,7 @@ int mythread_gettid(){
 
 TCB* scheduler(){
 	if( (queue_empty(tqueue_low) == 1) && (queue_empty(tqueue_high) == 1) ){ /*check if there are more threads to execute*/
+		printf("*** THREAD %d FINISHED\n", running -> tid);
 		printf("FINISH\n");
 		exit(1);
 	}

@@ -248,6 +248,15 @@ void activator(TCB* next){
 		memcpy(&aux, &running, sizeof(TCB *));
 		running = next;
 		current = running -> tid;
+		setcontext(&(next->run_env));
+		return;
+	}
+	else if((queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 0)){ /* both queues have content */
+		printf("Activate the next HIGH PRIORITY thread\n");
+		TCB* aux;
+		memcpy(&aux, &running, sizeof(TCB *));
+		running = next;
+		current = running -> tid;
 		setcontext (&(next->run_env));
 		return;
 	}

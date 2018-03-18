@@ -138,13 +138,14 @@ int mythread_create (void (*fun_addr)(),int priority)
 	}
 	enable_interrupt(); /*Unlock the signals*/
 	makecontext(&t_state[i].run_env, fun_addr, 1); /*create the new context*/
-	printf("\n\n\t\tQueue of HIGH priority after inserting\n");
-	queue_print(tqueue_high);
-	printf("\n\n\t\tQueue of LOW priority after inserting\n");
-	queue_print(tqueue_low);
+	printf("*** THREAD %d READY\n", t_state[i].tid);
+	//printf("\n\n\t\tQueue of HIGH priority after inserting\n");
+	//queue_print(tqueue_high);
+	//printf("\n\n\t\tQueue of LOW priority after inserting\n");
+	//queue_print(tqueue_low);
 	if(priority == HIGH_PRIORITY && running -> priority != HIGH_PRIORITY){ /*High priority thread*/
-		printf("Aqui\n");
 		TCB* next = scheduler(); /*get the next thread to be executed*/
+		printf("READ %d PREEMPTED: SET CONTEXT OF %d\n", running -> tid, next -> tid);
 		activator(next); /*I initialize the next process*/
 	}
 	return i;
@@ -189,7 +190,7 @@ void network_interrupt(int sig)
 
 	TCB* aux;
 	if((aux = dequeue(waiting_queue)) == NULL){ /* dequeue first thread from the waiting queue */
-		printf("Waiting queue is empty");
+		printf("Waiting queue is empty, discard packet\n");
 		return; /* discard the packet */
 	}
 	if(aux -> priority == HIGH_PRIORITY){
@@ -198,21 +199,20 @@ void network_interrupt(int sig)
 	if(aux -> priority == LOW_PRIORITY){
 		enqueue(tqueue_low, aux); /* enqueue thread in the low priority ready queue */
 	}
-	printf("*** THREAD %d READY\n", mythread_gettid());
+	printf("*** THREAD %d READY\n", aux -> tid);
 	//TCB* next = scheduler(); /*get the next thread to be executed*/
 	//activator(next); /*I initialize the next process*/
 }
 
 /* Free terminated thread and exits */
 void mythread_exit() {
-	int tid = mythread_gettid(); /*get the id of the current thread*/
-
-	printf("*** THREAD %d FINISHED\n", tid);
+	int tid = mythread_gettid(); /* get the id of the current thread */
 	t_state[tid].state = FREE;
-	free(t_state[tid].run_env.uc_stack.ss_sp); /*free memory  HABRÁ UE CAMBIARLO*/
-
-	TCB* next = scheduler(); /*get the next thread to be executed*/
-	activator(next); /*perform the context switch*/
+	free(t_state[tid].run_env.uc_stack.ss_sp); /* free memory  HABRÁ UE CAMBIARLO */
+	TCB* next = scheduler(); /* get the next thread to be executed */
+	printf("THREAD %d FINISHED\n", tid, next -> tid);
+	printf("THREAD %d FINISHED: SET CONTEXT OF %d\n", tid, next -> tid);
+	activator(next); /* perform the context switch */
 }
 
 /* Sets the priority of the calling thread */
@@ -235,6 +235,7 @@ int mythread_gettid(){
 
 TCB* scheduler(){
 	if( (queue_empty(tqueue_low) == 1) && (queue_empty(tqueue_high) == 1) && (queue_empty(waiting_queue) == 1)){ /*check if there are more threads to execute*/
+		printf("*** THREAD %d FINISHED\n", running -> tid);
 		printf("FINISH\n");
 		exit(1);
 	}

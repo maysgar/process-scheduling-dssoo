@@ -236,6 +236,7 @@ void timer_interrupt(int sig)
 		count = 0; /*restore the count*/
 		//printf("LOW PRIORITY thread finished its RR ticks, we do a change\n");
 		TCB* next = scheduler(); /*get the next thread to be executed*/
+		printf("*** SWAPCONTEXT FROM %i to %i\n", running-> tid, next -> tid);
 		activator(next); /*I initialize the next process*/
 	}
 }
@@ -263,7 +264,6 @@ void activator(TCB* next){
 	else if((running -> priority == LOW_PRIORITY) && next -> priority == HIGH_PRIORITY){ /* llega un thread de ALTA mientras uno de BAJA se ejectuta*/
 		//printf("Activate HIGH PRIORITY thread after a LOW\n");
 		TCB* aux;
-		printf("*** SWAPCONTEXT FROM %i to %i\n", running-> tid, next -> tid);
 		disable_interrupt(); /*block the signals while using the queue*/
 		enqueue(tqueue_low, running); /*enqueue*/
 		enable_interrupt(); /*Unlock the signals*/
@@ -276,7 +276,6 @@ void activator(TCB* next){
 	else if(running -> priority == LOW_PRIORITY){/*RR change*/
 		//printf("Activate LOW PRIORITY after LOW\n");
 		TCB* aux;
-		printf("*** SWAPCONTEXT FROM %i to %i\n", running-> tid, next -> tid);
 		disable_interrupt(); /*block the signals while using the queue*/
 		enqueue(tqueue_low, running); /*enqueue*/
 		enable_interrupt(); /*Unlock the signals*/

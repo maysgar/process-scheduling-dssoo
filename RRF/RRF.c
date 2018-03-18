@@ -198,6 +198,7 @@ TCB* scheduler(){
 	else if( (queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 1) /*the high priority 
 	is empty but not the low*/
 					&& (running -> priority == HIGH_PRIORITY)){ /*no more high priority processes*/
+		printf("Finishing last HIGH PRIORITY thread, we now change to the LOW PRIORITY threads\n");
 		TCB * aux;
 		disable_interrupt(); /*block the signals while using the queue*/
 		aux = dequeue(tqueue_low); /*dequeue*/
@@ -205,6 +206,7 @@ TCB* scheduler(){
 		return aux;
 	}
 	else if((running -> priority == LOW_PRIORITY) && (queue_empty(tqueue_high) == 0)){ /*change of queues*/
+		printf("A HIGH PRIORITY thread has arrived while a LOW is executing\n");
 		TCB * aux;
 		disable_interrupt(); /*block the signals while using the queue*/
 		aux = dequeue(tqueue_high); /*dequeue*/
@@ -212,6 +214,7 @@ TCB* scheduler(){
 		return aux;
 	}
 	else if( (running -> priority == LOW_PRIORITY) ){ /*RR change*/
+		printf("Change LOW priority thread by another LOW\n");
 		TCB * aux;
 		disable_interrupt(); /*block the signals while using the queue*/
 		aux = dequeue(tqueue_low); /*dequeue*/
@@ -238,6 +241,7 @@ void timer_interrupt(int sig)
 void activator(TCB* next){
 	if( (queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 1) /*the high priority queue is empty but not the low*/
 					 && (running -> priority == HIGH_PRIORITY || running -> priority == SYSTEM)){ /*no more high priority processes*/
+		printf("Activate LOW PRIORITY thread after HIGH\n");
 		TCB* aux;
 		memcpy(&aux, &running, sizeof(TCB *));
 		running = next;
@@ -246,6 +250,7 @@ void activator(TCB* next){
 		return;
 	}
 	else if((running -> priority == LOW_PRIORITY) && next -> priority == HIGH_PRIORITY){ /* llega un thread de ALTA mientras uno de BAJA se ejectuta*/
+		printf("Activate HIGH PRIORITY thread after a LOW\n");
 		TCB* aux;
 		printf("*** SWAPCONTEXT FROM %i to %i\n", running-> tid, next -> tid);
 		disable_interrupt(); /*block the signals while using the queue*/
@@ -258,6 +263,7 @@ void activator(TCB* next){
 		return;
 	}
 	else if(running -> priority == LOW_PRIORITY){/*RR change*/
+		printf("Activate LOW PRIORITY after LOW\n");
 		TCB* aux;
 		printf("*** SWAPCONTEXT FROM %i to %i\n", running-> tid, next -> tid);
 		disable_interrupt(); /*block the signals while using the queue*/

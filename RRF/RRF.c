@@ -166,8 +166,8 @@ void mythread_exit() {
 
 	printf("*** THREAD %d FINISHED\n", tid);
 	t_state[tid].state = FREE;
-	free(t_state[tid].run_env.uc_stack.ss_sp); /*free memory  HABRÁ UE CAMBIARLO*/
-
+	free(t_state[tid].run_env.uc_stack.ss_sp); /*free memory  HABRÁ QUE CAMBIARLO*/
+	printf("MYTHREAD_EXIT: A thread finishes so we execute the next one\n");
 	TCB* next = scheduler(); /*get the next thread to be executed*/
 	//count = 0; ?? commit holaquetal
 	activator(next); /*perform the context switch*/

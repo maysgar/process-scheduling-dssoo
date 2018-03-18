@@ -164,8 +164,6 @@ void network_interrupt(int sig)
 /* Free terminated thread and exits */
 void mythread_exit() {
 	int tid = mythread_gettid(); /*get the id of the current thread*/
-
-	printf("*** THREAD %d FINISHED\n", tid);
 	t_state[tid].state = FREE;
 	free(t_state[tid].run_env.uc_stack.ss_sp); /*free memory  HABRÁ QUE CAMBIARLO*/
 	TCB* next = scheduler(); /*get the next thread to be executed*/

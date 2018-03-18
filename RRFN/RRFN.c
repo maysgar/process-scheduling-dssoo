@@ -34,6 +34,7 @@ void init_mythreadlib() {
 
 	tqueue_low = queue_new(); //I initialize the queues
 	tqueue_high = queue_new(); //I initialize the queues
+	waiting_queue = queue_new(); // Initialize waiting queue
 
 	/* Create context for the idle thread */
 	if(getcontext(&idle.run_env) == -1)

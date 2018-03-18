@@ -198,7 +198,7 @@ TCB* scheduler(){
 	}
 	else if( (queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 1) /*the high priority 
 	is empty but not the low*/
-					&& (running -> priority == HIGH_PRIORITY)){ /*no more high priority processes*/
+					&& (running -> priority == HIGH_PRIORITY)){ /*no more high priority processes*/ /* no hace falta ultima condicion???? */
 		printf("Finishing last HIGH PRIORITY thread, we now change to the LOW PRIORITY threads\n");
 		TCB * aux;
 		disable_interrupt(); /*block the signals while using the queue*/
@@ -206,15 +206,15 @@ TCB* scheduler(){
 		enable_interrupt(); /*Unlock the signals*/
 		return aux;
 	}
-	else if((running -> priority == LOW_PRIORITY) && (queue_empty(tqueue_high) == 0)){ /*change of queues*/
-		printf("A HIGH PRIORITY thread has arrived while a LOW is executing\n");
+	else if((queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 0)){
+		printf("The HIGH PRIORITY queue is not empty, so a HIGH PRIORITY thread is executed next\n");
 		TCB * aux;
 		disable_interrupt(); /*block the signals while using the queue*/
 		aux = dequeue(tqueue_high); /*dequeue*/
 		enable_interrupt(); /*Unlock the signals*/
 		return aux;
 	}
-	else if( (running -> priority == LOW_PRIORITY) ){ /*RR change*/
+	else if(running -> priority == LOW_PRIORITY){ /*RR change*/
 		printf("Change LOW priority thread by another LOW\n");
 		TCB * aux;
 		disable_interrupt(); /*block the signals while using the queue*/

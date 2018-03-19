@@ -203,6 +203,7 @@ void network_interrupt(int sig)
 		TCB* next = scheduler(); /*get the next thread to be executed*/
 		activator(next); /*I initialize the next process*/
 	}
+	return;
 }
 
 /* Free terminated thread and exits */

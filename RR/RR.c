@@ -3,7 +3,8 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <ucontext.h>
-#include "RR.h"
+#include "interrupt.h"
+
 #include "mythread.h"
 
 #include "queue.h"
@@ -17,6 +18,11 @@ static TCB* running; /* Current running thread */
 static int init = 0;
 
 static int current = 0; /* current thread executing */
+
+TCB* scheduler();
+void activator();
+void timer_interrupt(int sig);
+void network_interrupt(int sig);
 
 
 /* Thread control block for the idle thread */

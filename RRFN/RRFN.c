@@ -139,11 +139,6 @@ int mythread_create (void (*fun_addr)(),int priority)
 	}
 	enable_interrupt(); /*Unlock the signals*/
 	makecontext(&t_state[i].run_env, fun_addr, 1); /*create the new context*/
-	printf("*** THREAD %d ---create---- READY\n", t_state[i].tid);
-    printf("\n\n\t\tQueue of HIGH priority after inserting\n");
-    queue_print(tqueue_high);
-    printf("\n\n\t\tQueue of LOW priority after inserting\n");
-    queue_print(tqueue_low);
 	if(priority == HIGH_PRIORITY && running -> priority != HIGH_PRIORITY){ /*High priority thread*/
 		TCB* next = scheduler(); /*get the next thread to be executed*/
 		printf("READ %d PREEMPTED: SET CONTEXT OF %d\n", running -> tid, next -> tid);
@@ -201,9 +196,7 @@ void network_interrupt(int sig)
         enqueue(tqueue_low, aux); /* enqueue thread in the low priority ready queue */
 	}
 	enable_interrupt(); /*Unlock the signals*/
-	printf("*** THREAD %d INTERRUUUUUUPT READY\n", aux -> tid);
-    printf("\n\n\t\tQueue of WAITING priority after inserting\n");
-    queue_print(waiting_queue);
+	printf("*** THREAD %d READY\n", aux -> tid);
 	//TCB* next = scheduler(); /*get the next thread to be executed*/
 	//activator(next); /*I initialize the next process*/
 }
@@ -214,8 +207,8 @@ void mythread_exit() {
 	t_state[tid].state = FREE;
 	free(t_state[tid].run_env.uc_stack.ss_sp); /* free memory  HABRÁ UE CAMBIARLO */
 	TCB* next = scheduler(); /* get the next thread to be executed */
-	printf("THREAD %d FINISHED\n", tid, next -> tid);
-	printf("THREAD %d FINISHED: SET CONTEXT OF %d\n", tid, next -> tid);
+	printf("*** THREAD %d FINISHED\n", tid, next -> tid);
+	printf("*** THREAD %d FINISHED: SET CONTEXT OF %d\n", tid, next -> tid);
 	activator(next); /* perform the context switch */
 }
 
@@ -255,6 +248,13 @@ TCB* scheduler(){
 		enable_interrupt(); /*Unlock the signals*/
 		return aux;
 	}
+    else if( (queue_empty(tqueue_low) == 1) && (queue_empty(tqueue_high) == 0)){ /*the low priority is empty but not the low*/
+        TCB * aux;
+        disable_interrupt(); /*block the signals while using the queue*/
+        aux = dequeue(tqueue_high); /*dequeue*/
+        enable_interrupt(); /*Unlock the signals*/
+        return aux;
+    }
 	else if((queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 0)){ /*change of queues*/ /* cambiar de baja prioridad a uno de alta que acaba de llegar*/
 		TCB * aux;
 		disable_interrupt(); /*block the signals while using the queue*/
@@ -269,7 +269,6 @@ TCB* scheduler(){
 		enable_interrupt(); /*Unlock the signals*/
 		return aux;
 	}
-	
 	return NULL;
 }
 
@@ -281,17 +280,17 @@ void timer_interrupt(int sig)
 	}
 	if( (running -> priority == LOW_PRIORITY)  &&  (count == QUANTUM_TICKS)) /*RR time slice consumed for low priority*/
 	{
-		count = 0; /*restore the count*/
+        count = 0; /*restore the count*/
 		TCB* next = scheduler(); /*get the next thread to be executed*/
-		activator(next); /*I initialize the next process*/
-	}
+        activator(next); /*I initialize the next process*/
+    }
 	//no se si hace falta condicion para el IDLE thread
 }
 
 void activator(TCB* next){
 	if( (queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 1) /* the high priority queue is empty but not the low */
 					 && (running -> priority == HIGH_PRIORITY || running -> priority == SYSTEM)){ /* no more high priority processes */
-		TCB* aux;
+        TCB* aux;
 		memcpy(&aux, &running, sizeof(TCB *));
 		running = next;
 		current = running -> tid;
@@ -299,7 +298,7 @@ void activator(TCB* next){
 		return;
 	}
 	else if(running -> priority == SYSTEM){ /* thread idle is changed */
-		TCB* aux;
+        TCB* aux;
 		memcpy(&aux, &running, sizeof(TCB *));
 		printf("*** THREAD READY: SET CONTEXT TO %d\n", next -> tid);
 		running = next;
@@ -307,8 +306,7 @@ void activator(TCB* next){
 		setcontext (&(next->run_env));
 		return;
 	}
-	else if((running -> priority == LOW_PRIORITY) && next -> priority == HIGH_PRIORITY){ /* llega un thread de ALTA mientras uno de BAJA se ejectuta*/
-		//printf("Activate HIGH PRIORITY thread after a LOW\n");
+	else if((running -> priority == LOW_PRIORITY) && (next -> priority == HIGH_PRIORITY)){ /* llega un thread de ALTA mientras uno de BAJA se ejectuta*/
 		TCB* aux;
 		disable_interrupt(); /*block the signals while using the queue*/
 		enqueue(tqueue_low, running); /*enqueue*/
@@ -321,7 +319,6 @@ void activator(TCB* next){
 		return;
 	}
 	else if((queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 0)){ /* both queues have content */
-		//printf("Activate the next HIGH PRIORITY thread\n");
 		TCB* aux;
 		memcpy(&aux, &running, sizeof(TCB *));
 		running = next;
@@ -330,7 +327,6 @@ void activator(TCB* next){
 		return;
 	}
 	else if(running -> state == FREE){
-		//printf("Activate the next HIGH PRIORITY thread\n");
 		TCB* aux;
 		memcpy(&aux, &running, sizeof(TCB *));
 		running = next;
@@ -339,7 +335,6 @@ void activator(TCB* next){
 		return;
 	}
 	else if(running -> priority == LOW_PRIORITY){/*RR change*/
-		//printf("Activate LOW PRIORITY after LOW\n");
 		TCB* aux;
 		disable_interrupt(); /*block the signals while using the queue*/
 		enqueue(tqueue_low, running); /*enqueue*/

@@ -17,7 +17,7 @@ static TCB* running; /* Current running thread */
 static int init = 0;
 static int count = 0; /*to know in what RR tick are we*/
 
-static int current = 0;
+static int current = 0; /* current thread executing */
 
 
 /* Thread control block for the idle thread */
@@ -123,12 +123,10 @@ int mythread_create (void (*fun_addr)(),int priority)
 	t_state[i].run_env.uc_stack.ss_size = STACKSIZE;
 	t_state[i].run_env.uc_stack.ss_flags = 0;
 
-	disable_interrupt(); /*block the signals while using the queue*/
-	enqueue(tqueue, &t_state[i]); /*enqueue the thread in the queue of threads*/
-	enable_interrupt(); /*Unlock the signals*/
-	makecontext(&t_state[i].run_env, fun_addr, 1); /*create the new context*/
-	printf("\t\tQueue after inserting\n");
-	queue_print(tqueue);
+	disable_interrupt(); /* block the signals while using the queue */
+	enqueue(tqueue, &t_state[i]); /* enqueue the thread in the queue of threads */
+	enable_interrupt(); /* Unlock the signals */
+	makecontext(&t_state[i].run_env, fun_addr, 1); /* create the new context */
 	return i;
 } /****** End my_thread_create() ******/
 
@@ -145,14 +143,14 @@ void network_interrupt(int sig)
 
 /* Free terminated thread and exits */
 void mythread_exit() {
-	int tid = mythread_gettid(); /*get the id of the current thread*/
+	int tid = mythread_gettid(); /* get the id of the current thread */
 
 	printf("*** THREAD %d FINISHED\n", tid);
 	t_state[tid].state = FREE;
-	free(t_state[tid].run_env.uc_stack.ss_sp); /*free memory*/
+	free(t_state[tid].run_env.uc_stack.ss_sp); /* free memory */
 
-	TCB* next = scheduler(); /*get the next thread to be executed*/
-	activator(next); /*perform the context switch*/
+	TCB* next = scheduler(); /* get the next thread to be executed */
+	activator(next); /* perform the context switch */
 }
 
 /* Sets the priority of the calling thread */
@@ -174,18 +172,18 @@ int mythread_gettid(){
 }
 
 /* RR scheduler
- * the new thread to be executed is returned*/
+ * the new thread to be executed is returned */
 TCB* scheduler(){
-	if(queue_empty(tqueue) == 1){ /*check if there are more threads to execute*/
-		printf("FINISH\n");
+	if(queue_empty(tqueue) == 1){ /* check if there are more threads to execute */
+		printf("FINISH\n"); /* no more processes to be executed */
 		exit(1);
 	}
-	else{ /*return the next thread in the queue*/
+	else{ /* return the next thread in the queue */
 		TCB * aux;
-		disable_interrupt(); /*block the signals while using the queue*/
-		aux = dequeue(tqueue); /*dequeue*/
-		enable_interrupt(); /*Unlock the signals*/
-		return aux;
+		disable_interrupt(); /* block the signals while using the queue */
+		aux = dequeue(tqueue); /* dequeue the next process to be executed*/
+		enable_interrupt(); /* Unlock the signals */
+		return aux; /* return the next process to be executed */
 	}
 }
 
@@ -214,14 +212,15 @@ void activator(TCB* next){
 }
 
 
-/* Timer interrupt  */
+/* Timer interrupt
+ * It checks if the RR slice has been executed */
 void timer_interrupt(int sig)
 {
 	count ++;
-	if(count == QUANTUM_TICKS) /*RR time slice consumed*/
+	if(count == QUANTUM_TICKS) /* RR time slice consumed */
 	{
-		count = 0; /*restore the count*/
-		TCB* next = scheduler(); /*get the next thread to be executed*/
-		activator(next); /*I initialize the next process*/
+		count = 0; /* restore the count */
+		TCB* next = scheduler(); /* get the next thread to be executed */
+		activator(next); /* I initialize the next process */
 	}
 }

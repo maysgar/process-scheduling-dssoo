@@ -205,7 +205,7 @@ void mythread_exit() {
 	t_state[tid].state = FREE;
 	free(t_state[tid].run_env.uc_stack.ss_sp); /* free memory  HABRÁ UE CAMBIARLO */
 	TCB* next = scheduler(); /* get the next thread to be executed */
-	printf("*** THREAD %d FINISHED\n", tid, next -> tid);
+	printf("*** THREAD %d FINISHED\n", tid);
 	printf("*** THREAD %d FINISHED: SET CONTEXT OF %d\n", tid, next -> tid);
 	activator(next); /* perform the context switch */
 }

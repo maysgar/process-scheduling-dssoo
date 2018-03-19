@@ -9,15 +9,11 @@
 void reset_timer(long usec) {
   struct itimerval quantum;
 
-  /* Intialize an interval corresponding to round-robin quantum*
+  /* Intialize an interval corresponding to round-robin quantum*/
   quantum.it_interval.tv_sec = usec / 1000000;
   quantum.it_interval.tv_usec = usec % 1000000;
   quantum.it_value.tv_sec = usec / 1000000;
-  quantum.it_value.tv_usec = usec % 1000000;*/
-  quantum.it_interval.tv_sec = 0;
-  quantum.it_interval.tv_usec = 0;
-  quantum.it_value.tv_sec = 0;
-  quantum.it_value.tv_usec = 500000; /*mas o menos medio segundo*/
+  quantum.it_value.tv_usec = usec % 1000000;
   /* Activate the virtual timer to generate a SIGVTALRM signal when the quantum is over */
   if(setitimer(ITIMER_VIRTUAL, &quantum, (struct itimerval *)0) == -1){
     perror("setitimer");

@@ -14,13 +14,13 @@
 #define IDLE 3
 
 #define STACKSIZE 10000
-#define QUANTUM_TICKS 2 /*RR time slot*/
+#define QUANTUM_TICKS 40 /*RR time slot*/
 
 #define LOW_PRIORITY 0
 #define HIGH_PRIORITY 1
 #define SYSTEM 2
 
-#define PRINT 0 //If it is 1 the messages are printed
+#define PRINT 1 //If it is 1 the messages are printed
 
 /* Structure containing thread state  */
 typedef struct tcb{
@@ -47,11 +47,9 @@ int mythread_gettid(); /* Returns the thread id */
 int changeQueue(); /*change from the low priority queue to the high one*/
 int tick_minus();/*It substract 1 tick and it checks if there is no more ticks, returning 0*/
 int getTicks();/*It returns the number of remaining ticks (only for debugging)*/
-TCB* schedulerFIFO(); /*get the next thread to be executedfrom the high priority queue*/
-TCB* schedulerRR ();/* RR scheduler the new thread to be executed is returned from the low priority queue*/
+TCB* scheduler(); /*scheduler*/
 void timer_interrupt(int sig);/* Timer interrupt  */
-void activator_RR(TCB* actual, TCB* next);/*Activator with swapcontext*/
-void activator_FIFO(TCB* next);/*Activator with setcontext*/
+void activator(TCB* next);/*Activator with swapcontext*/
 
 int blockSignals(); /*It blocks all the signals*/
 int unlockSignals(); /*It unlock the signals*/

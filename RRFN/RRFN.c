@@ -24,6 +24,11 @@ static int init = 0;
 /* Thread control block for the idle thread */
 TCB idle;
 
+TCB* scheduler();
+void activator();
+void timer_interrupt(int sig);
+void network_interrupt(int sig);
+
 void idle_function(){
 	while(1);
 }

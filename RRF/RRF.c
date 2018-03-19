@@ -275,7 +275,7 @@ void activator(TCB* next){
 		setcontext (&(next->run_env));
 		return;
 	}
-	else if((running -> priority == LOW_PRIORITY) && (running -> state == FREE)){
+	else if(running -> state == FREE){
 		//printf("Activate the next HIGH PRIORITY thread\n");
 		TCB* aux;
 		memcpy(&aux, &running, sizeof(TCB *));

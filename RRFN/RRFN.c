@@ -296,13 +296,14 @@ void activator(TCB* next){
 		setcontext (&(next->run_env));
 		return;
 	}
-	else if(running -> priority == LOW_PRIORITY){/*RR change*/ /* cambiamos baja prioridad (sin acabar) por cualquiera */
+	else if((running -> priority == LOW_PRIORITY) && next -> priority == HIGH_PRIORITY){ /* llega un thread de ALTA mientras uno de BAJA se ejectuta*/
+		//printf("Activate HIGH PRIORITY thread after a LOW\n");
 		TCB* aux;
-		printf("*** SWAPCONTEXT FROM %i to %i\n", running-> tid, next -> tid);
 		disable_interrupt(); /*block the signals while using the queue*/
 		enqueue(tqueue_low, running); /*enqueue*/
 		enable_interrupt(); /*Unlock the signals*/
 		memcpy(&aux, &running, sizeof(TCB *));
+		printf("*** SWAPCONTEXT FROM %i to %i\n", running-> tid, next -> tid);
 		running = next;
 		current = running -> tid;
 		if(swapcontext (&(aux->run_env), &(next->run_env)) == -1) printf("Swap error"); /*switch the context to the next thread*/

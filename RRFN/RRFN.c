@@ -287,10 +287,19 @@ void timer_interrupt(int sig)
 }
 
 void activator(TCB* next){
-	if( (queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 1) /*the high priority queue is empty but not the low*/
-					 && (running -> priority == HIGH_PRIORITY || running -> priority == SYSTEM)){ /*no more high priority processes*/
+	if( (queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 1) /* the high priority queue is empty but not the low */
+					 && (running -> priority == HIGH_PRIORITY || running -> priority == SYSTEM)){ /* no more high priority processes */
 		TCB* aux;
 		memcpy(&aux, &running, sizeof(TCB *));
+		running = next;
+		current = running -> tid;
+		setcontext (&(next->run_env));
+		return;
+	}
+	else if(running -> priority == SYSTEM){ /* thread idle is changed */
+		TCB* aux;
+		memcpy(&aux, &running, sizeof(TCB *));
+		printf("*** THREAD READY: SET CONTEXT TO %d\n", next -> tid);
 		running = next;
 		current = running -> tid;
 		setcontext (&(next->run_env));
@@ -309,7 +318,35 @@ void activator(TCB* next){
 		if(swapcontext (&(aux->run_env), &(next->run_env)) == -1) printf("Swap error"); /*switch the context to the next thread*/
 		return;
 	}
-	//si queremos cambiar uno de baja prioridad (acabado) por cualquierda
-	//si queremos cambiar uno de alta prioridad (sin acabar) por otro de alta prioridad
-	//si queremos cambiar uno de alta prioridad (acabado) por otro de alta prioridad (DEBERIA ESTAR INCLUIDO EN EL PRIMER IF???)
+	else if((queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 0)){ /* both queues have content */
+		//printf("Activate the next HIGH PRIORITY thread\n");
+		TCB* aux;
+		memcpy(&aux, &running, sizeof(TCB *));
+		running = next;
+		current = running -> tid;
+		setcontext (&(next->run_env));
+		return;
+	}
+	else if(running -> state == FREE){
+		//printf("Activate the next HIGH PRIORITY thread\n");
+		TCB* aux;
+		memcpy(&aux, &running, sizeof(TCB *));
+		running = next;
+		current = running -> tid;
+		setcontext (&(next->run_env));
+		return;
+	}
+	else if(running -> priority == LOW_PRIORITY){/*RR change*/
+		//printf("Activate LOW PRIORITY after LOW\n");
+		TCB* aux;
+		disable_interrupt(); /*block the signals while using the queue*/
+		enqueue(tqueue_low, running); /*enqueue*/
+		enable_interrupt(); /*Unlock the signals*/
+		memcpy(&aux, &running, sizeof(TCB *));
+		printf("*** SWAPCONTEXT FROM %i to %i\n", running-> tid, next -> tid);
+		running = next;
+		current = running -> tid;
+		if(swapcontext (&(aux->run_env), &(next->run_env)) == -1) printf("Swap error"); /*switch the context to the next thread*/
+		return;
+	}
 }

@@ -17,7 +17,6 @@ static int current = 0;
 
 /* Variable indicating if the library is initialized (init == 1) or not (init == 0) */
 static int init = 0;
-static int count = 0; /*to know in what RR tick are we*/
 
 /* Thread control block for the idle thread */
 TCB idle;
@@ -123,6 +122,7 @@ int mythread_create (void (*fun_addr)(),int priority)
 	t_state[i].tid = i;
 	t_state[i].run_env.uc_stack.ss_size = STACKSIZE;
 	t_state[i].run_env.uc_stack.ss_flags = 0;
+	t_state[i].ticks=QUANTUM_TICKS;
 
 	disable_interrupt(); /*block the signals while using the queue*/
 	if(priority == LOW_PRIORITY){ /*Low priority thread*/
@@ -231,11 +231,11 @@ TCB* scheduler(){
 void timer_interrupt(int sig)
 {
 	if(running -> priority == LOW_PRIORITY){ /*check if count or not RR slice*/
-		count ++;
+		running->ticks--;
 	}
-	if( (running -> priority == LOW_PRIORITY)  &&  (count == QUANTUM_TICKS)) /*RR time slice consumed for low priority*/
+	if( (running -> priority == LOW_PRIORITY)  &&  (running->ticks == 0)) /*RR time slice consumed for low priority*/
 	{
-		count = 0; /*restore the count*/
+		running->ticks = QUANTUM_TICKS; /*restore the count*/
 		//printf("LOW PRIORITY thread finished its RR ticks, we do a change\n");
 		TCB* next = scheduler(); /*get the next thread to be executed*/
 		activator(next); /*I initialize the next process*/

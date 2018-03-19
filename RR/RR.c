@@ -15,7 +15,6 @@ static TCB* running; /* Current running thread */
 
 /* Variable indicating if the library is initialized (init == 1) or not (init == 0) */
 static int init = 0;
-static int count = 0; /*to know in what RR tick are we*/
 
 static int current = 0; /* current thread executing */
 
@@ -122,6 +121,7 @@ int mythread_create (void (*fun_addr)(),int priority)
 	t_state[i].tid = i;
 	t_state[i].run_env.uc_stack.ss_size = STACKSIZE;
 	t_state[i].run_env.uc_stack.ss_flags = 0;
+	t_state[i].ticks = QUANTUM_TICKS;
 
 	disable_interrupt(); /* block the signals while using the queue */
 	enqueue(tqueue, &t_state[i]); /* enqueue the thread in the queue of threads */
@@ -194,6 +194,7 @@ void activator(TCB* next){
 		running = next;
 		current = running -> tid;
 		setcontext (&(next->run_env));
+		
 		printf("mythread_free: After setcontext, should never get here!!...\n");
 		return;;
 	}
@@ -216,10 +217,10 @@ void activator(TCB* next){
  * It checks if the RR slice has been executed */
 void timer_interrupt(int sig)
 {
-	count ++;
-	if(count == QUANTUM_TICKS) /* RR time slice consumed */
+	running->ticks --;
+	if(running->ticks == 0) /* RR time slice consumed */
 	{
-		count = 0; /* restore the count */
+		running->ticks = QUANTUM_TICKS; /* restore the count */
 		TCB* next = scheduler(); /* get the next thread to be executed */
 		activator(next); /* I initialize the next process */
 	}

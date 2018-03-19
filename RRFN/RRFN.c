@@ -240,15 +240,29 @@ TCB* scheduler(){
 		printf("Everything empty but the WAITING QUEUE");
 		return &idle; /* return idle thread */
 	}
-    else if(((queue_empty(tqueue_low) == 1) && (queue_empty(tqueue_high) == 0)) || ((queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 0))){ /*the low priority is empty but not the low*/
+	else if( (queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 1) /*the high priority is empty but not the low*/
+					&& (running -> priority == HIGH_PRIORITY)){ /*no more high priority processes*/
+		TCB * aux;
+		disable_interrupt(); /*block the signals while using the queue*/
+		aux = dequeue(tqueue_low); /*dequeue*/
+		enable_interrupt(); /*Unlock the signals*/
+		return aux;
+	}
+    else if( (queue_empty(tqueue_low) == 1) && (queue_empty(tqueue_high) == 0)){ /*the low priority is empty but not the low*/
         TCB * aux;
         disable_interrupt(); /*block the signals while using the queue*/
         aux = dequeue(tqueue_high); /*dequeue*/
         enable_interrupt(); /*Unlock the signals*/
         return aux;
     }
-	else if(((queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 1) /*the high priority is empty but not the low*/
-					&& (running -> priority == HIGH_PRIORITY)) || (running -> priority == LOW_PRIORITY)){ /*no more high priority processes*/
+	else if((queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 0)){ /*change of queues*/ /* cambiar de baja prioridad a uno de alta que acaba de llegar*/
+		TCB * aux;
+		disable_interrupt(); /*block the signals while using the queue*/
+		aux = dequeue(tqueue_high); /*dequeue*/
+		enable_interrupt(); /*Unlock the signals*/
+		return aux;
+	}
+	else if(running -> priority == LOW_PRIORITY){ /*RR change*/ /* cambiar uno de baja prioridad a otro de baja */
 		TCB * aux;
 		disable_interrupt(); /*block the signals while using the queue*/
 		aux = dequeue(tqueue_low); /*dequeue*/
@@ -274,18 +288,53 @@ void timer_interrupt(int sig)
 }
 
 void activator(TCB* next){
-	if(((queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 1) && (running -> priority == HIGH_PRIORITY || running -> priority == SYSTEM)) || (((queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 0)) || (running -> state == FREE)) || (running -> priority == SYSTEM)){ /* no more high priority processes */
+	if( (queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 1) /* the high priority queue is empty but not the low */
+					 && (running -> priority == HIGH_PRIORITY || running -> priority == SYSTEM)){ /* no more high priority processes */
         TCB* aux;
 		memcpy(&aux, &running, sizeof(TCB *));
-		if(running -> priority == SYSTEM){
-			printf("*** THREAD READY: SET CONTEXT TO %d\n", next -> tid);
-		}
 		running = next;
 		current = running -> tid;
-		setcontext(&(next->run_env));
+		setcontext (&(next->run_env));
 		return;
 	}
-	else if(((running -> priority == LOW_PRIORITY) && (next -> priority == HIGH_PRIORITY)) || (running -> priority == LOW_PRIORITY)){ /* llega un thread de ALTA mientras uno de BAJA se ejectuta*/
+	else if(running -> priority == SYSTEM){ /* thread idle is changed */
+        TCB* aux;
+		memcpy(&aux, &running, sizeof(TCB *));
+		printf("*** THREAD READY: SET CONTEXT TO %d\n", next -> tid);
+		running = next;
+		current = running -> tid;
+		setcontext (&(next->run_env));
+		return;
+	}
+	else if((running -> priority == LOW_PRIORITY) && (next -> priority == HIGH_PRIORITY)){ /* llega un thread de ALTA mientras uno de BAJA se ejectuta*/
+		TCB* aux;
+		disable_interrupt(); /*block the signals while using the queue*/
+		enqueue(tqueue_low, running); /*enqueue*/
+		enable_interrupt(); /*Unlock the signals*/
+		memcpy(&aux, &running, sizeof(TCB *));
+		printf("*** SWAPCONTEXT FROM %i to %i\n", running-> tid, next -> tid);
+		running = next;
+		current = running -> tid;
+		if(swapcontext (&(aux->run_env), &(next->run_env)) == -1) printf("Swap error"); /*switch the context to the next thread*/
+		return;
+	}
+	else if((queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 0)){ /* both queues have content */
+		TCB* aux;
+		memcpy(&aux, &running, sizeof(TCB *));
+		running = next;
+		current = running -> tid;
+		setcontext (&(next->run_env));
+		return;
+	}
+	else if(running -> state == FREE){
+		TCB* aux;
+		memcpy(&aux, &running, sizeof(TCB *));
+		running = next;
+		current = running -> tid;
+		setcontext (&(next->run_env));
+		return;
+	}
+	else if(running -> priority == LOW_PRIORITY){/*RR change*/
 		TCB* aux;
 		disable_interrupt(); /*block the signals while using the queue*/
 		enqueue(tqueue_low, running); /*enqueue*/

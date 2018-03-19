@@ -190,7 +190,6 @@ void network_interrupt(int sig)
 
 	TCB* aux;
 	if((aux = dequeue(waiting_queue)) == NULL){ /* dequeue first thread from the waiting queue */ //cambiar a isempty()
-		printf("Waiting queue is empty, discard packet\n");
 		return; /* discard the packet */
 	}
 	disable_interrupt(); /*block the signals while using the queue*/

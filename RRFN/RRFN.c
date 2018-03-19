@@ -183,9 +183,11 @@ no thread waiting, the packet should be discarded
 */
 void network_interrupt(int sig)
 {
+	if(running -> tid == 2){
 	queue_print(tqueue_low);
 	queue_print(tqueue_high);
 	queue_print(waiting_queue);
+	}
 	TCB* aux;
 	if((aux = dequeue(waiting_queue)) == NULL){ /* dequeue first thread from the waiting queue */ //cambiar a isempty()
 		return; /* discard the packet */

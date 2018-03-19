@@ -183,7 +183,9 @@ no thread waiting, the packet should be discarded
 */
 void network_interrupt(int sig)
 {
-
+	queue_print(tqueue_low);
+	queue_print(tqueue_high);
+	queue_print(waiting_queue);
 	TCB* aux;
 	if((aux = dequeue(waiting_queue)) == NULL){ /* dequeue first thread from the waiting queue */ //cambiar a isempty()
 		return; /* discard the packet */
@@ -198,9 +200,7 @@ void network_interrupt(int sig)
 	enable_interrupt(); /*Unlock the signals*/
 	printf("*** THREAD %d READY\n", aux -> tid);
 	/* if the thread enqueue in the ready queue is HIGH_PRIORITY, and the one executing is LOW_PRIORITY, the HIGH_PRIORITY one shall be executed inmediatly */
-	if(aux == NULL){
-		printf("SE TE LO FOLLARON\n");
-	}
+	
 	if((aux -> priority == HIGH_PRIORITY) && (running -> priority == LOW_PRIORITY)){
 		queue_print(tqueue_low);
 		queue_print(tqueue_high);

@@ -139,7 +139,7 @@ int mythread_create (void (*fun_addr)(),int priority)
 	}
 	enable_interrupt(); /*Unlock the signals*/
 	makecontext(&t_state[i].run_env, fun_addr, 1); /*create the new context*/
-	printf("*** THREAD %d READY\n", t_state[i].tid);
+	printf("*** THREAD %d ---create---- READY\n", t_state[i].tid);
     printf("\n\n\t\tQueue of HIGH priority after inserting\n");
     queue_print(tqueue_high);
     printf("\n\n\t\tQueue of LOW priority after inserting\n");
@@ -201,7 +201,7 @@ void network_interrupt(int sig)
         enqueue(tqueue_low, aux); /* enqueue thread in the low priority ready queue */
 	}
 	enable_interrupt(); /*Unlock the signals*/
-	printf("*** THREAD %d READY\n", aux -> tid);
+	printf("*** THREAD %d INTERRUUUUUUPT READY\n", aux -> tid);
     printf("\n\n\t\tQueue of WAITING priority after inserting\n");
     queue_print(waiting_queue);
 	//TCB* next = scheduler(); /*get the next thread to be executed*/

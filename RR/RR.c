@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <ucontext.h>
 #include "RR.h"
-#include "interrupt.h"
+#include "mythread.h"
 
 #include "queue.h"
 

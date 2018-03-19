@@ -6,6 +6,7 @@
 #include "RRFN.h"
 #include "interrupt.h"
 
+
 #include "queue.h"
 
 static TCB t_state[N]; /* Array of state thread control blocks: the process allows a maximum of N threads */
@@ -139,10 +140,10 @@ int mythread_create (void (*fun_addr)(),int priority)
 	enable_interrupt(); /*Unlock the signals*/
 	makecontext(&t_state[i].run_env, fun_addr, 1); /*create the new context*/
 	printf("*** THREAD %d READY\n", t_state[i].tid);
-	//printf("\n\n\t\tQueue of HIGH priority after inserting\n");
-	//queue_print(tqueue_high);
-	//printf("\n\n\t\tQueue of LOW priority after inserting\n");
-	//queue_print(tqueue_low);
+    printf("\n\n\t\tQueue of HIGH priority after inserting\n");
+    queue_print(tqueue_high);
+    printf("\n\n\t\tQueue of LOW priority after inserting\n");
+    queue_print(tqueue_low);
 	if(priority == HIGH_PRIORITY && running -> priority != HIGH_PRIORITY){ /*High priority thread*/
 		TCB* next = scheduler(); /*get the next thread to be executed*/
 		printf("READ %d PREEMPTED: SET CONTEXT OF %d\n", running -> tid, next -> tid);
@@ -158,11 +159,11 @@ it should leave the CPU and introduced in a waiting queue
  */
 int read_network()
 {
+    if(running -> tid == 0) return 0;
 	TCB* aux;
 	if(PRINT == 1) printf ("Thread %d with priority %d\t calls to the read_network\n", mythread_gettid(), mythread_getpriority(0));
 	printf("*** THREAD %d READ FROM NETWORK\n", mythread_gettid());
-	//running -> state = WAITING;
-	
+
 	TCB* next = scheduler(); //falta el caso en el que solo quedan las mierdas de la waiting queue
 
 	printf("*** SWAPCONTEXT FROM %i to %i\n", running-> tid, next -> tid);
@@ -197,10 +198,12 @@ void network_interrupt(int sig)
 		enqueue(tqueue_high, aux); /* enqueue thread in the high priority ready queue */
 	}
 	if(aux -> priority == LOW_PRIORITY){
-		enqueue(tqueue_low, aux); /* enqueue thread in the low priority ready queue */
+        enqueue(tqueue_low, aux); /* enqueue thread in the low priority ready queue */
 	}
 	enable_interrupt(); /*Unlock the signals*/
 	printf("*** THREAD %d READY\n", aux -> tid);
+    printf("\n\n\t\tQueue of WAITING priority after inserting\n");
+    queue_print(waiting_queue);
 	//TCB* next = scheduler(); /*get the next thread to be executed*/
 	//activator(next); /*I initialize the next process*/
 }
@@ -235,11 +238,11 @@ int mythread_gettid(){
 }
 
 TCB* scheduler(){
-	if( (queue_empty(tqueue_low) == 1) && (queue_empty(tqueue_high) == 1) && (queue_empty(waiting_queue) == 1)){ /*check if there are more threads to execute*/
+    if( (queue_empty(tqueue_low) == 1) && (queue_empty(tqueue_high) == 1) && (queue_empty(waiting_queue) == 1)){ /*check if there are more threads to execute*/
 		printf("*** THREAD %d FINISHED\n", running -> tid);
 		printf("FINISH\n");
 		exit(1);
-	}
+    }
 	else if( (queue_empty(tqueue_low) == 1) && (queue_empty(tqueue_high) == 1) && (queue_empty(waiting_queue) == 0)){ /* the waiting queue is the only one left */
 		printf("Everything empty but the WAITING QUEUE");
 		return &idle; /* return idle thread */

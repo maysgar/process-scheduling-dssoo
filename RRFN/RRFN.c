@@ -189,16 +189,18 @@ void network_interrupt(int sig)
 {
 
 	TCB* aux;
-	if((aux = dequeue(waiting_queue)) == NULL){ /* dequeue first thread from the waiting queue */
+	if((aux = dequeue(waiting_queue)) == NULL){ /* dequeue first thread from the waiting queue */ //cambiar a isempty()
 		printf("Waiting queue is empty, discard packet\n");
 		return; /* discard the packet */
 	}
+	disable_interrupt(); /*block the signals while using the queue*/
 	if(aux -> priority == HIGH_PRIORITY){
 		enqueue(tqueue_high, aux); /* enqueue thread in the high priority ready queue */
 	}
 	if(aux -> priority == LOW_PRIORITY){
 		enqueue(tqueue_low, aux); /* enqueue thread in the low priority ready queue */
 	}
+	enable_interrupt(); /*Unlock the signals*/
 	printf("*** THREAD %d READY\n", aux -> tid);
 	//TCB* next = scheduler(); /*get the next thread to be executed*/
 	//activator(next); /*I initialize the next process*/
@@ -243,8 +245,7 @@ TCB* scheduler(){
 		printf("Everything empty but the WAITING QUEUE");
 		return &idle; /* return idle thread */
 	}
-	else if( (queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 1) /*the high priority 
-	is empty but not the low*/
+	else if( (queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 1) /*the high priority is empty but not the low*/
 					&& (running -> priority == HIGH_PRIORITY)){ /*no more high priority processes*/
 		TCB * aux;
 		disable_interrupt(); /*block the signals while using the queue*/
@@ -252,7 +253,7 @@ TCB* scheduler(){
 		enable_interrupt(); /*Unlock the signals*/
 		return aux;
 	}
-	else if((running -> priority == LOW_PRIORITY) && (queue_empty(tqueue_high) == 0)){ /*change of queues*/ /* cambiar de baja prioridad a uno de alta que acaba de llegar*/
+	else if((queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 0)){ /*change of queues*/ /* cambiar de baja prioridad a uno de alta que acaba de llegar*/
 		TCB * aux;
 		disable_interrupt(); /*block the signals while using the queue*/
 		aux = dequeue(tqueue_high); /*dequeue*/
@@ -266,13 +267,7 @@ TCB* scheduler(){
 		enable_interrupt(); /*Unlock the signals*/
 		return aux;
 	}
-	else if(running -> priority == HIGH_PRIORITY){ /*RR change*/ /* cambiar uno de baja prioridad a otro de baja */
-		TCB * aux;
-		disable_interrupt(); /*block the signals while using the queue*/
-		aux = dequeue(tqueue_high); /*dequeue*/
-		enable_interrupt(); /*Unlock the signals*/
-		return aux;
-	}
+	
 	return NULL;
 }
 

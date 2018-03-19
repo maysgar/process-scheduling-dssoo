@@ -142,11 +142,6 @@ int mythread_create (void (*fun_addr)(),int priority)
 	}
 	enable_interrupt(); /*Unlock the signals*/
 	makecontext(&t_state[i].run_env, fun_addr, 1); /*create the new context*/
-	printf("*** THREAD %d READY\n", t_state[i].tid);
-	//printf("\n\n\t\tQueue of HIGH priority after inserting\n");
-	//queue_print(tqueue_high);
-	//printf("\n\n\t\tQueue of LOW priority after inserting\n");
-	//queue_print(tqueue_low);
 	if(priority == HIGH_PRIORITY && running -> priority != HIGH_PRIORITY){ /*High priority thread*/
 		//running -> ticks += current; /* restore ticks from the low priority thread */ ??commit holaquetal
 		TCB* next = scheduler(); /* get the next thread to be executed */

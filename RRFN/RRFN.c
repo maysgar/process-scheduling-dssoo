@@ -195,6 +195,10 @@ void network_interrupt(int sig)
 	}
 	enable_interrupt(); /* Unlock the signals */
 	printf("*** THREAD %d READY\n", aux -> tid);
+	/* If the IDLE thread is running we change it to the new thread in the ready queue */
+	if(running -> priority == SYSTEM){
+		activator(scheduler());
+	}
 }
 
 /* Free terminated thread and exits */

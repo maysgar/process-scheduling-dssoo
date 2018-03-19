@@ -198,7 +198,7 @@ void network_interrupt(int sig)
 	printf("*** THREAD %d READY\n", aux -> tid);
 	/* if the thread enqueue in the ready queue is HIGH_PRIORITY, and the one executing is LOW_PRIORITY, the HIGH_PRIORITY one shall be executed inmediatly */
 	
-	printf("running -> priority = %d\n", running -> priority);
+	printf("running -> priority = %d	aux -> priority = %d\n", running -> priority, aux -> priority);
 	//if((aux -> priority == HIGH_PRIORITY) && (running -> priority == LOW_PRIORITY)){
 	//	TCB* next = scheduler(); /*get the next thread to be executed*/
 	//	activator(next); /*I initialize the next process*/

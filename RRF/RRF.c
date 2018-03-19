@@ -238,7 +238,6 @@ void timer_interrupt(int sig)
 		count = 0; /*restore the count*/
 		//printf("LOW PRIORITY thread finished its RR ticks, we do a change\n");
 		TCB* next = scheduler(); /*get the next thread to be executed*/
-		printf("*** SWAPCONTEXT FROM %i to %i\n", running-> tid, next -> tid);
 		activator(next); /*I initialize the next process*/
 	}
 }
@@ -261,9 +260,10 @@ void activator(TCB* next){
 		enqueue(tqueue_low, running); /*enqueue*/
 		enable_interrupt(); /*Unlock the signals*/
 		memcpy(&aux, &running, sizeof(TCB *));
+		printf("*** SWAPCONTEXT FROM %i to %i\n", running-> tid, next -> tid);
 		running = next;
 		current = running -> tid;
-		setcontext (&(next->run_env));
+		if(swapcontext (&(aux->run_env), &(next->run_env)) == -1) printf("Swap error"); /*switch the context to the next thread*/
 		return;
 	}
 	else if((queue_empty(tqueue_low) == 0) && (queue_empty(tqueue_high) == 0)){ /* both queues have content */
@@ -291,6 +291,7 @@ void activator(TCB* next){
 		enqueue(tqueue_low, running); /*enqueue*/
 		enable_interrupt(); /*Unlock the signals*/
 		memcpy(&aux, &running, sizeof(TCB *));
+		printf("*** SWAPCONTEXT FROM %i to %i\n", running-> tid, next -> tid);
 		running = next;
 		current = running -> tid;
 		if(swapcontext (&(aux->run_env), &(next->run_env)) == -1) printf("Swap error"); /*switch the context to the next thread*/
